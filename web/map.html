@@ -30,7 +30,21 @@
 			//id: 'mapbox.streets',
 			//accessToken: 'pk.eyJ1IjoiYXJqdW52ZW4iLCJhIjoiY2phN3ptODN4MDEzMTMybG8xM2t1bzltZCJ9.1HxRGkovlxUEqMNHlMmDmw'
 			//}).addTo(mymap);
+		var marker = L.marker([28.509, 77.201]).addTo(mymap);
+		marker.bindPopup("<b>Hello world!</b><br>I am a popup.");
+		
+		var popup = L.popup();
 
+		
+		function onMapClick(e) {
+			popup
+				.setLatLng(e.latlng)
+				.setContent("You clicked the map at " + e.latlng.toString())
+				.openOn(mymap);
+		}
+
+		mymap.on('click', onMapClick);
+		marker.on('click',openPopup)
 	</script>
 
 </body>
