@@ -3,7 +3,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 import ConfigParser
 import time
-import os,sys
+import os,sys,json,geojson,urllib
 sys.path.append("/opt/livingdata/lib")
 from livdatcsvlib import *
 
@@ -44,5 +44,72 @@ def load_dev_list(devlistfile):
 	devlist.importfile(devlistfile)
 	return devlist
 
-site=login_to_site(abconfig)
+
+def get_all_feed_json(devlist):
+	config=setup(abconfig)
+	datapath=config.get("Data","datapath")
+	for dev in devlist.matrix:
+		filename= urllib.URLopener()
+		try:
+			print "Trying to get JSON for %s" %dev['DevName']
+			filename.retrieve(dev['URL']+"/feed.json",os.path.join(datapath,"%s.json" %dev['Folder']))
+		except:
+			print "Couldnt get feed for %s" %dev['DevName']
+def get_all_feed_csv(devlist):
+	config=setup(abconfig)
+	datapath=config.get("Data","datapath")
+	for dev in devlist.matrix:
+		filename= urllib.URLopener()
+		try:
+			print "Trying to get CSV for %s" %dev['DevName']
+			filename.retrieve(dev['URL']+"/feeds.csv",os.path.join(datapath,"%s.csv" %dev['Folder']))
+		except:
+			print "Couldnt get feed for %s" %dev['DevName']
+
+
+def set_lat_long_for_devices(devlist):
+	config=setup(abconfig)
+	datapath=config.get("Data","datapath")
+	geodevlist=[]
+	for dev in devlist.matrix:
+		jsonfile=os.path.join(datapath,"%s.json" %dev['Folder'])
+		f=open(jsonfile,"r")
+		devjson=json.loads(f.read())
+		f.close()
+		#latitude=devjson['channel']['latitude']
+		#longitude=devjson['channel']['longitude']
+		latitude=devjson['feeds'][0]['field6']
+		longitude=devjson['feeds'][0]['field7']
+		
+		geodev={}
+		for col in devlist.colnames:
+			geodev[col]=dev[col]
+		geodev['latitude']=latitude
+		geodev['longitude']=longitude
+		geodevlist.append(geodev)
+	c=CSVFile()
+	c.colnames=devlist.colnames
+	c.matrix=geodevlist
+	return c
+	#c.exportfile(abdevlist)
+	
+
+	
+#site=login_to_site(abconfig)
+def get_data():
+	get_all_feed_json(devlist)
+	get_all_feed_csv(devlist)
+	
+def get_devmarkerfc(devlist):
+	devicemarkers=[]
+	for dev in devlist.matrix:
+		feature=geojson.Feature()
+		print dev['latitude']
+		point=geojson.Point((float(dev['longitude']),float(dev['latitude'])))
+		feature['geometry']=point
+		for colname in devlist.colnames:
+			feature['properties'][colname]=dev[colname]
+		devicemarkers.append(feature)
+	devicemarkersfc=geojson.FeatureCollection(devicemarkers)
+	return devicemarkersfc
 devlist=load_dev_list(abdevlist)

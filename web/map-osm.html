@@ -22,19 +22,19 @@
 	<script>
 		
 		var mymap = L.map('mapid').setView([25.509815,77.201317 ], 6);
-		 //add a tile layer to add to our map, in this case it's the 'standard' OpenStreetMap.org tile server
-		//L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        //    attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
-        //    maxZoom: 18
-		//	}).addTo(mymap);
+		//add a tile layer to add to our map, in this case it's the 'standard' OpenStreetMap.org tile server
+		L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+            maxZoom: 18
+			}).addTo(mymap);
 		
 
-		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-			maxZoom: 18,
-			id: 'mapbox.streets',
-			accessToken: 'pk.eyJ1IjoiYXJqdW52ZW4iLCJhIjoiY2phN3ptODN4MDEzMTMybG8xM2t1bzltZCJ9.1HxRGkovlxUEqMNHlMmDmw'
-				}).addTo(mymap);
+		//L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+		//	attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+		//	maxZoom: 18,
+		//	id: 'mapbox.streets',
+		//	accessToken: 'pk.eyJ1IjoiYXJqdW52ZW4iLCJhIjoiY2phN3ptODN4MDEzMTMybG8xM2t1bzltZCJ9.1HxRGkovlxUEqMNHlMmDmw'
+		//		}).addTo(mymap);
 	
 
 		//var marker = L.marker([28.509, 77.201]).addTo(mymap);

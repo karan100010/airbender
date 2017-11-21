@@ -1,0 +1,192 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    77.0,
+                    28.0
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/359632",
+                "latitude": "28",
+                "Folder": "et1",
+                "DevName": "ET 1",
+                "longitude": "77"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    77.0,
+                    28.0
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/359633",
+                "latitude": "28",
+                "Folder": "et4",
+                "DevName": "ET 4",
+                "longitude": "77"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    77.0,
+                    28.0
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/359635",
+                "latitude": "28",
+                "Folder": "et5",
+                "DevName": "ET 5",
+                "longitude": "77"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    86.320236,
+                    23.797234
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/265765",
+                "latitude": "23.797234",
+                "Folder": "g2",
+                "DevName": "G2",
+                "longitude": "86.320236"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    82.729347,
+                    22.362844
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/265766",
+                "latitude": "22.362844",
+                "Folder": "g3",
+                "DevName": "G3",
+                "longitude": "82.729347"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    77.202721,
+                    28.509031
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/265767",
+                "latitude": "28.509031",
+                "Folder": "g4",
+                "DevName": "G4",
+                "longitude": "77.202721"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    77.201309,
+                    28.509823
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/265768",
+                "latitude": "28.509823",
+                "Folder": "g5",
+                "DevName": "G5",
+                "longitude": "77.201309"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    88.386047,
+                    22.503399
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/265770",
+                "latitude": "22.503399",
+                "Folder": "g6",
+                "DevName": "G6",
+                "longitude": "88.386047"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    82.724205,
+                    22.36722
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/265772",
+                "latitude": "22.36722",
+                "Folder": "g7",
+                "DevName": "G7",
+                "longitude": "82.724205"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    85.005783,
+                    23.651857
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/265774",
+                "latitude": "23.651857",
+                "Folder": "g8",
+                "DevName": "G8",
+                "longitude": "85.005783"
+            }
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    77.200386,
+                    28.508123
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "URL": "https://thingspeak.com/channels/265775",
+                "latitude": "28.508123",
+                "Folder": "g9",
+                "DevName": "G9",
+                "longitude": "77.200386"
+            }
+        }
+    ]
+}

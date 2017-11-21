@@ -1,12 +1,12 @@
-DevName,URL,Folder
-ET 1,https://thingspeak.com/channels/117874,et1
-ET 4,https://thingspeak.com/channels/262868,et4
-ET 5,https://thingspeak.com/channels/262869,et5
-G2,https://thingspeak.com/channels/265765,g2
-G3,https://thingspeak.com/channels/265766,g3
-G4,https://thingspeak.com/channels/265767,g4
-G5,https://thingspeak.com/channels/265768,g5
-G6,https://thingspeak.com/channels/265770,g6
-G7,https://thingspeak.com/channels/265772,g7
-G8,https://thingspeak.com/channels/265774,g8
-G9,https://thingspeak.com/channels/265775,g9
+URL,DevName,latitude,longitude,Folder
+https://thingspeak.com/channels/359632,ET 1,28,77,et1
+https://thingspeak.com/channels/359633,ET 4,28,77,et4
+https://thingspeak.com/channels/359635,ET 5,28,77,et5
+https://thingspeak.com/channels/265765,G2,23.797234,86.320236,g2
+https://thingspeak.com/channels/265766,G3,22.362844,82.729347,g3
+https://thingspeak.com/channels/265767,G4,28.509031,77.202721,g4
+https://thingspeak.com/channels/265768,G5,28.509823,77.201309,g5
+https://thingspeak.com/channels/265770,G6,22.503399,88.386047,g6
+https://thingspeak.com/channels/265772,G7,22.36722,82.724205,g7
+https://thingspeak.com/channels/265774,G8,23.651857,85.005783,g8
+https://thingspeak.com/channels/265775,G9,28.508123,77.200386,g9
