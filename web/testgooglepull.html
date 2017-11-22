@@ -1,0 +1,68 @@
+
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"  crossorigin=""/>
+	<!-- Make sure you put this AFTER Leaflet's CSS -->
+	<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js" crossorigin=""></script>
+	<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+	<script src="js/backend.gdocs.js"></script>
+	
+	<style>
+		#mapid 
+		{ 
+			height: 100%; 
+			width: 100%;
+		}
+	</style>
+	<title>Airbender - Air Quality Monitoring Sensor Data</title>
+</head>
+
+<body>
+
+<div class="results"></div> 
+
+<script>
+ 
+ // ID of the Google Spreadsheet
+ var spreadsheetID = "SPREADSHEET KEY";
+
+ // Make sure it is public or set to Anyone with link can view 
+var url="https://spreadsheets.google.com/feeds/list/1mBWTyAp3tCnuunrK1Rbptb4rGDwByqX4NyUe8kxmR5Q/od6/public/basic?alt=json"
+	
+ $.getJSON(url, function(data) {
+	
+	  var entry = data.feed.entry;
+	  rows=[]
+	  $(entry).each(function(){
+		
+			template={
+						"geometry" : {"type":"Point","coordinates":[]},
+						"type" : "Feature",
+						"properties" : {}
+			}
+			template['properties']['id']=this.title.$t
+			//console.log({this.content.$t})
+			valuepairs=this.content.$t.split(",")
+			//console.log(valuepairs)
+			$(valuepairs).each(function(){
+					key=$.trim(this.split(": ")[0]);
+					value=$.trim(this.split(": ")[1]);
+					
+					
+					
+					template['properties'][key]=value;
+			});
+			template['geometry']['coordinates']=[template['properties']['latitude'],template['properties']['longitude']]
+			//console.log(template)
+			rows.push(template)
+			
+			$('.results').prepend('<h2>'+this.title.$t+'</h2><p>'+this.content.$t.split(",") +'</p>');
+	  });
+  
+	 console.log(rows)
+ });
+
+</script>
+</body>
+</html>
