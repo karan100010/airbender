@@ -5,7 +5,6 @@
 	<!-- Make sure you put this AFTER Leaflet's CSS -->
 	<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js" crossorigin=""></script>
 	<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
-	<script src="js/backend.gdocs.js"></script>
 	
 	<style>
 		#mapid 
@@ -119,7 +118,7 @@
 				onEachFeature : function(device,layer){
 					icon=getDevIcon(device['properties']['URL'])
 					layer.setIcon(icon)
-					layer.bindPopup("<b>"+device['properties']['DevName']+"</b><br><a href='"+device['properties']['URL']+"' target='_blank'>Datafeed</a>");
+					layer.bindPopup("<b>"+device['properties']['id']+"</b><br><a href='"+device['properties']['url']+"' target='_blank'>Datafeed</a>");
 				}
 			}).addTo(mymap);
 		 });
