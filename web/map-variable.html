@@ -22,9 +22,9 @@
 	</center>
 	<script>
 		
-		var maplayer="osm" //can be "osm" or "mapbox"
+		var maplayer="mapbox" //can be "osm" or "mapbox"
 		var mymap = L.map('mapid').setView([25.509815,77.201317 ], 6);
-
+		var popup = L.popup();
 		function onMapClick(e) {
 			popup
 				.setLatLng(e.latlng)
@@ -66,81 +66,205 @@
 		//Adding the selected tile layer
 		//tilelayer.addTo(mymap);
 		mymap.addLayer(tilelayer);
-		// load device list in GeoJSON from an external file
 		
-		function getDevIcon(url){
-			jsonurl=url+"/feed.json"
-			//console.log(jsonurl)
-			
+		
+		// convert channel json into list of data point objects
+		function getChannelData(channeljson){
+			channeldata=[]
+			channeldef=channeljson['channel']
+			for (def in channeldef){
+				if (channeldef[def]=='Dust_PM25' ||  channeldef[def]=='PM2.5'){
+					channeldef[def]='pm25'
+				}
+				if (channeldef[def]=='Dust_PM10' || channeldef[def]=='PM 10'){
+					channeldef[def]='pm10'
+				}
+				if (channeldef[def]=='Dust_PM01' || channeldef[def]=='PM 1'){
+					channeldef[def]='pm1'
+				}
+				if (channeldef[def]=='TEMPERATURE' || channeldef[def]=='Temp C'){
+					channeldef[def]='temp'
+				}
+				if (channeldef[def]=='HUMIDITY' || channeldef[def]=='Humidity'){
+					channeldef[def]='humid'
+				}
+				if (channeldef[def]=='BATTERY' || channeldef[def]=='BattVolt'  || channeldef[def]=='BATTERY'){
+					channeldef[def]='batt'
+				}
+			}		
+			feeds=channeljson['feeds']
+			$(feeds).each(function(){
+				row={}
+				row['created_at']=this['created_at']
+				row['entry_id']=this['entry_id']
+				for (var key in this){
+					if (key.startsWith("field")){
+						row[channeldef[key]]=this[key]
+					}
+				}
+				channeldata.push(row)
+			});
+			return channeldata
+		}
+		function getDevIcon(aqi){
+			//console.log("AQI reported for icon selection="+aqi)
+			chosen_icon="icons/aqibase.png"
+			if (aqi<=50){
+				chosen_icon="icons/aqi0good.png"
+			}
+			else if(aqi>50 && aqi <=100){
+				chosen_icon="icons/aqi1satisfactory.png"
+			}
+			else if(aqi>100 && aqi <=200){
+				chosen_icon="icons/aqi2moderate.png"
+			}
+			else if(aqi>200 && aqi <=300){
+				chosen_icon="icons/aqi3poor.png"
+			}
+			else if(aqi>300 && aqi <=400){
+				chosen_icon="icons/aqi4vpoor.png"
+			}
+			else if(aqi>400){
+				chosen_icon="icons/aqi5severe.png"
+			}
 			var devicon=L.icon({
-						iconUrl: 'icons/pointer1.png',
-						iconSize: [20,20]
+						iconUrl: chosen_icon,
+						iconSize: [30,30]
 					})
 			
 			//console.log(devicon.options.iconUrl)
-			return devicon
-				
-		}
-		var url="https://spreadsheets.google.com/feeds/list/1mBWTyAp3tCnuunrK1Rbptb4rGDwByqX4NyUe8kxmR5Q/od6/public/basic?alt=json"
+			return devicon		
+		}	
 	
-		 $.getJSON(url, function(data) {
-			
-			  var entry = data.feed.entry;
-			  devices=[]
-			  $(entry).each(function(){
-				
-					template={
-								"geometry" : {"type":"Point","coordinates":[]},
-								"type" : "Feature",
-								"properties" : {}
-					}
-					template['properties']['id']=this.title.$t
-					//console.log({this.content.$t})
-					valuepairs=this.content.$t.split(",")
-					//console.log(valuepairs)
-					$(valuepairs).each(function(){
-							key=$.trim(this.split(": ")[0]);
-							value=$.trim(this.split(": ")[1]);
-							
-							
-							
-							template['properties'][key]=value;
-					});
-					template['geometry']['coordinates']=[template['properties']['longitude'],template['properties']['latitude']]
-					//console.log(template)
-					devices.push(template)
+		//Functions to calculate aqi
+		
+		function getSiPm25(pm25){
+			//console.log("PM25: "+pm25)
+			if(pm25<=30){
+				return pm25*50/30
+			}
+			else if(pm25>30 && pm25<=60){
+				return 50+(pm25-30)*50/30;
+			}
+			else if(pm25>60 && pm25<=90){
+				return 100+(pm25-60)*100/30;
+			}				
+			else if(pm25>90 && pm25<=120){
+				return 200+(pm25-90)*(100/30);
+			}
+			else if(pm25>120 && pm25<=250){
+				return 300+(pm25-120)*(100/130);
+			}
+			else if(pm25>250){
+				return 400+(pm25-250)*(100/130);
+			}
+
+		}
+		function getSiPm10(pm10){
+			//console.log("PM10: "+pm10)
+			if(pm10<=50){
+				return pm10
+			}
+			else if(pm10>50 && pm10<=100){
+				return pm10
+			}
+			else if(pm10>100 && pm10<=250){
+				return 100+(pm10-100)*100/150;
+			}
+			else if(pm10>250 && pm10<=350){
+				return 200+(pm10-250);
+			}
+			else if(pm10>350 && pm10<=430){
+				return 300+(pm10-350)*(100/80);
+			}
+			else if(pm10>430){
+				return 400+(pm10-430)*(100/80);
+			}
+		}
+		
+		function getLatestAvgs(id,channeldata){
+				channeldata=channeldata.slice(-10)
+				sumsipm25=0.0
+				sumsipm10=0.0
+				sumaqi=0.0
+				sumpm10=0
+				sumpm25=0
+				for (row in channeldata){
 					
-					//$('.results').prepend('<h2>'+this.title.$t+'</h2><p>'+this.content.$t.split(",") +'</p>');
-			  });
-		  
-			 console.log(devices)
-			 markerlayer=L.geoJson(devices, {
+					pm25=parseFloat(channeldata[row].pm25)
+					pm10=parseFloat(channeldata[row].pm10)
+					sumpm10=sumpm10+pm10
+					sumpm25=sumpm25+pm25
+					sipm25=getSiPm25(pm25)
+					sipm10=getSiPm10(pm10)
+					sumsipm10=sumsipm10+sipm10
+					sumsipm25=sumsipm25+sipm25
+					if(sipm10>sipm25){
+						aqi=sipm10;
+					}
+					else{
+						aqi=sipm25;
+					}
+					//console.log("PM10:"+pm10+" SIPM10:"+sipm10+" PM25: "+pm25+" SIPM25:"+sipm25+" AQI: "+aqi)
+					sumaqi=sumaqi+aqi
+				}
+				avgsipm25=sumsipm25/10
+				avgsipm10=sumsipm10/10
+				avgaqi=sumaqi/10
+				avgpm10=sumpm10/10
+				avgpm25=sumpm25/10
+				response={}
+				response['avgaqi']=Math.round(avgaqi)
+				response['avgsipm25']=Math.round(avgsipm25)
+				response['avgsipm10']=Math.round(avgsipm10)
+				response['avgpm10']=Math.round(avgpm10)
+				response['avgpm25']=Math.round(avgpm25)
+				
+				return response
+		}
+	
+		// load device list in GeoJSON from a Google spreadsheet
+		var url="https://spreadsheets.google.com/feeds/list/1mBWTyAp3tCnuunrK1Rbptb4rGDwByqX4NyUe8kxmR5Q/od6/public/basic?alt=json"
+		$.getJSON(url, function(data) {
+			var entry = data.feed.entry;
+			devices=[]
+			$(entry).each(function(){
+				template={
+					"geometry" : {
+						"type":"Point","coordinates":[]
+						},
+					"type" : "Feature",
+					"properties" : {}
+				}
+				template['properties']['id']=this.title.$t
+				valuepairs=this.content.$t.split(",")
+				$(valuepairs).each(function(){
+					key=$.trim(this.split(": ")[0]);
+					value=$.trim(this.split(": ")[1]);
+					template['properties'][key]=value;
+				});
+				template['geometry']['coordinates']=[template['properties']['longitude'],template['properties']['latitude']]
+				devices.push(template)		
+			});
+			  
+			markerlayer=L.geoJson(devices, {
 				onEachFeature : function(device,layer){
-					icon=getDevIcon(device['properties']['URL'])
-					layer.setIcon(icon)
-					layer.bindPopup("<b>"+device['properties']['id']+"</b><br><a href='"+device['properties']['url']+"' target='_blank'>Datafeed</a>");
+					jsonurl=device['properties']['url']+"/feed.json"
+					var channeljson 
+					$.getJSON(jsonurl,function(data){
+						channeljson=data
+						channeldata=getChannelData(channeljson)
+						latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
+						//console.log(latestavgs)
+						icon=getDevIcon(latestavgs['avgaqi'])
+						layer.setIcon(icon)
+						layer.bindPopup(
+							"<b>"+device['properties']['id']+"</b><br>Readings averaged over last 10 mins<br><a href='"+device['properties']['url']+"' target='_blank'>Datafeed</a> <br><b>Avg PM10: </b>"+latestavgs['avgpm10']+"<br><b>Avg PM25: </b>"+latestavgs['avgpm25']+"<br><b>Avg SI PM10: </b>"+latestavgs['avgsipm10']+"<br><b>Avg SI PM25: </b>"+latestavgs['avgsipm25']+"<br><b>Avg AQI: </b>"+latestavgs['avgaqi']
+							);
+					});
 				}
 			}).addTo(mymap);
 		 });
-
-		/*
-		jsonfile="data/devlist.json"
-		$.getJSON(jsonfile,function(data){
-			
-			
-			devices=data['features']
-			//Create the marker layer
-			markerlayer=L.geoJson(devices, {
-				onEachFeature : function(device,layer){
-					icon=getDevIcon(device['properties']['URL'])
-					layer.setIcon(icon)
-					layer.bindPopup("<b>"+device['properties']['DevName']+"</b><br><a href='"+device['properties']['URL']+"' target='_blank'>Datafeed</a>");
-				}
-			}).addTo(mymap);
-		});
-		*/
-		var popup = L.popup();
-		
 		
 	</script>
 

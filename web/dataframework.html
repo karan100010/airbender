@@ -29,7 +29,8 @@
 	// Make sure it is public or set to Anyone with link can view 
 	var devlisturl="https://spreadsheets.google.com/feeds/list/1mBWTyAp3tCnuunrK1Rbptb4rGDwByqX4NyUe8kxmR5Q/od6/public/basic?alt=json"
 	var devlistjson
-	var devlist=[]
+	var devices=[]
+	
 	$.when(
 		$.getJSON(devlisturl,function(data){
 			devlistjson=data
@@ -61,19 +62,14 @@
 				//console.log(template)
 				devices.push(template)
 			
-				$('.results').prepend('<h2>'+this.title.$t+'</h2><p>'+this.content.$t.split(",") +'</p>');
+				$('.results').prepend('<div id='++'><h2>'+this.title.$t+'</h2><p>'+this.content.$t.split(",") +'</p></div>');
 			});
-	  		//console.log(rows)
 		
 		}
+		console.log(devices)
 	});
 	
 	
-	/*
-	$.getJSON(url, function(data) {
-		  
-	 });
-	 */
 
 </script>
 </body>
