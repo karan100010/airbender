@@ -146,22 +146,26 @@ function displayGraph(div,data=null){
 		d.aqi = +d.aqi;
 		
     });
-    console.log(data)
+    //console.log(data)
     x.domain(d3.extent(data, function(d) { return d.created_at; }));
     y.domain([0, d3.max(data, function(d) { return d.aqi; })]);
 	// Define the line
-	var pm10line = d3.line()    
-		.x(function(d) { return x(d.created_at); })
-		.y(function(d) { return y(d.pm10); });
 	
 	svgpm10=d3.select(div).select("#svgpm10").append("g")
+	
+	
 	data.forEach(function(d){
 		//console.log(d)
 		//console.log(x(d.created_at)+","+y(d.pm10));
+	
 		svgpm10		
-		.append("path")
-		.attr("class","line")
-		.attr("d",pm10line(d));
+		.append("rect")
+		.attr("class","bar")
+		.attr("x", 30+x(d.created_at))
+		.attr("y", y(d.pm10))
+		.attr("width","1")
+		.attr("height",height-y(d.pm10));
+		//.attr("transform", "translate(30," + height + ")");
 	});
 	
 	
