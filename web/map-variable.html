@@ -5,8 +5,8 @@
 	<!-- Make sure you put this AFTER Leaflet's CSS -->
 	<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js" crossorigin=""></script>
 	<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
-	<script src="https://d3js.org/d3.v3.min.js"></script>
-	
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="js/graph.js"></script>
 	<style>
 		#mapid 
 		{ 
@@ -148,49 +148,6 @@
 	
 		//Functions to calculate aqi
 		
-		function getSiPm25(pm25){
-			//console.log("PM25: "+pm25)
-			if(pm25<=30){
-				return pm25*50/30
-			}
-			else if(pm25>30 && pm25<=60){
-				return 50+(pm25-30)*50/30;
-			}
-			else if(pm25>60 && pm25<=90){
-				return 100+(pm25-60)*100/30;
-			}				
-			else if(pm25>90 && pm25<=120){
-				return 200+(pm25-90)*(100/30);
-			}
-			else if(pm25>120 && pm25<=250){
-				return 300+(pm25-120)*(100/130);
-			}
-			else if(pm25>250){
-				return 400+(pm25-250)*(100/130);
-			}
-
-		}
-		function getSiPm10(pm10){
-			//console.log("PM10: "+pm10)
-			if(pm10<=50){
-				return pm10
-			}
-			else if(pm10>50 && pm10<=100){
-				return pm10
-			}
-			else if(pm10>100 && pm10<=250){
-				return 100+(pm10-100)*100/150;
-			}
-			else if(pm10>250 && pm10<=350){
-				return 200+(pm10-250);
-			}
-			else if(pm10>350 && pm10<=430){
-				return 300+(pm10-350)*(100/80);
-			}
-			else if(pm10>430){
-				return 400+(pm10-430)*(100/80);
-			}
-		}
 		
 		function getLatestAvgs(id,channeldata){
 				channeldata=channeldata.slice(-10)
@@ -280,92 +237,33 @@
 						//console.log(latestavgs)
 						icon=getDevIcon(latestavgs['avgaqi'])
 						layer.setIcon(icon)
-						layer.bindPopup("Loading...",{maxWidth: 600})
+						layer.bindPopup("Loading...",{maxWidth: 800})
 						layer.on('click', function(e){
 							var popup = e.target.getPopup();
-							//console.log(device['properties'])
-							var div = $('<div id="'+device['properties']['devname']+'" class="popupGraph" style="width: 550px; height:210px;">\
+							channeldata=getChannelData(channeljson)
+							channeldata=channeldata.slice(-20)
+							latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
+							var div = $('<div id="'+device['properties']['devname']+'" class="popupGraph" style="width: 600px; height:250px;">\
 											<b>'+device['properties']['devname']+'</b>\
 											<br>Readings averaged over last 10 mins\
 											<br><b>Date: </b>'+latestavgs['ts']['date']+'\
 											<br><b>Time: </b>'+latestavgs['ts']['time']+'\
 											<br><a href="'+device['properties']['url']+'" target="_blank">Datafeed</a>\
 											<table width=100%><tbody>\
-											<tr><td><td><b>Avg PM10: </b></td><td>'+latestavgs['avgpm10']+'</td></td><td><td><b> Avg PM25: </b></td><td>'+latestavgs['avgpm25']+'</td></td><td><td><b>Avg AQI: </td><td></b>'+latestavgs['avgaqi']+'</td></td></tr>\
-											<tr><td><td><b>Avg SI PM10: </b></td><td>'+latestavgs['avgsipm10']+'</td></td><td><td><b> Avg SI PM25: </b></td><td>'+latestavgs['avgsipm25']+'</td></td><td><td></td></td></tr>\
+											<tr><td><td><b>Avg PM10: </b></td><td style="text-align: left"	>'+latestavgs['avgpm10']+'</td></td><td><td><b> Avg PM25: </b></td><td style="text-align: left">'+latestavgs['avgpm25']+'</td></td><td><td><b>Avg AQI: </b></td><td style="text-align: left">'+latestavgs['avgaqi']+'</td></td></tr>\
+											<tr><td><td><b>Avg SI PM10: </b></td><td style="text-align: left">'+latestavgs['avgsipm10']+'</td></td><td><td><b> Avg SI PM25: </b></td><td style="text-align: left">'+latestavgs['avgsipm25']+'</td></td><td><td></td></td></tr>\
 											</tbody></table><br>\
 											<table width=100%><tbody>\
 											<tr><td><div id="pm10"></div></td><td><div id="pm25"></div></td><td><div id="aqi"></div></td></tr>\
 											</tbody></table><br>\
 											</div>')[0];
 							
-							var width = '100%',
-							height = 100,
-							margin = 30;
-							popup.setContent(div);
-							popup.update()
-							var svgpm25 = d3.select(div).select('#pm25').append("svg")
-								.attr("width", width)
-								.attr("height", height)
-								.attr("id", "svgpm25")
-								
-							var svgpm10 = d3.select(div).select('#pm10').append("svg")
-								.attr("width", width)
-								.attr("height", height)
-								.attr("id", "svgpm10")
-							
-							var svgaqi = d3.select(div).select('#aqi').append("svg")
-								.attr("width", width)
-								.attr("height", height)
-								.attr("id", "svgaqi")
-
-							d3.select(div).select("#svgpm10")			
-								.append("circle")
-								.style("stroke", "gray")
-								.style("fill", "white")
-								.attr("r", function(){return $("#svgpm10").width()/4;})
-								.attr("cx", function(){return $("#svgpm10").width()/2;})
-								.attr("cy", function(){return $("#svgpm10").height()/2;})
-								.on("mouseover", function () {
-									d3.select(this).style("fill", "aliceblue");
-								})
-								.on("mouseout", function () {
-									d3.select(this).style("fill", "white");
-								});
-								
-								
-								
-							d3.select(div).select("#svgpm25")			
-								.append("circle")
-								.style("stroke", "gray")
-								.style("fill", "white")
-								.attr("r", function(){return $("#svgpm25").width()/4;})
-								.attr("cx", function(){return $("#svgpm25").width()/2;})
-								.attr("cy", function(){return $("#svgpm25").height()/2;})
-								.on("mouseover", function () {
-									d3.select(this).style("fill", "aliceblue");
-								})
-								.on("mouseout", function () {
-									d3.select(this).style("fill", "white");
-								});
-							
-							d3.select(div).select("#svgaqi")			
-								.append("circle")
-								.style("stroke", "gray")
-								.style("fill", "white")
-								.attr("r", function(){return $("#svgaqi").width()/4;})
-								.attr("cx", function(){return $("#svgaqi").width()/2;})
-								.attr("cy", function(){return $("#svgaqi").height()/2;})
-								.on("mouseover", function () {
-									d3.select(this).style("fill", "aliceblue");
-								})
-								.on("mouseout", function () {
-									d3.select(this).style("fill", "white");
-								});
-
 							
 							popup.setContent(div);
-							popup.update()
+							popup.update();
+							displayGraph(div,channeldata);
+							popup.setContent(div);
+							popup.update();
 						});
 						
 							
