@@ -25,6 +25,20 @@
 				font: 11px arial, sans-serif;
 				text-align: right;
 		}
+		path { 
+			stroke: steelblue;
+			stroke-width: 2;
+			fill: none;
+		}
+
+		.axis path,
+		.axis line {
+			fill: none;
+			stroke: grey;
+			stroke-width: 1;
+			shape-rendering: crispEdges;
+		}
+
 		
 		</style>
 	<title>Airbender - Air Quality Monitoring Sensor Data</title>
@@ -146,54 +160,10 @@
 			return devicon		
 		}	
 	
-		//Functions to calculate aqi
 		
-		
-		function getLatestAvgs(id,channeldata){
-				channeldata=channeldata.slice(-10)
-				sumsipm25=0.0
-				sumsipm10=0.0
-				sumaqi=0.0
-				sumpm10=0
-				sumpm25=0
-				for (row in channeldata){
-					
-					pm25=parseFloat(channeldata[row].pm25)
-					pm10=parseFloat(channeldata[row].pm10)
-					sumpm10=sumpm10+pm10
-					sumpm25=sumpm25+pm25
-					sipm25=getSiPm25(pm25)
-					sipm10=getSiPm10(pm10)
-					sumsipm10=sumsipm10+sipm10
-					sumsipm25=sumsipm25+sipm25
-					if(sipm10>sipm25){
-						aqi=sipm10;
-					}
-					else{
-						aqi=sipm25;
-					}
-					//console.log("PM10:"+pm10+" SIPM10:"+sipm10+" PM25: "+pm25+" SIPM25:"+sipm25+" AQI: "+aqi)
-					sumaqi=sumaqi+aqi
-					ts=channeldata[row].created_at
-				}
-				ts=channeldata[row].created_at
-				
-				avgsipm25=sumsipm25/10
-				avgsipm10=sumsipm10/10
-				avgaqi=sumaqi/10
-				avgpm10=sumpm10/10
-				avgpm25=sumpm25/10
-				response={}
-				response['avgaqi']=Math.round(avgaqi)
-				response['avgsipm25']=Math.round(avgsipm25)
-				response['avgsipm10']=Math.round(avgsipm10)
-				response['avgpm10']=Math.round(avgpm10)
-				response['avgpm25']=Math.round(avgpm25)
-				response['ts']={"date":ts.split("T")[0],"time":ts.split("T")[1].split("Z")[0]}
-				return response
-		}
 	
 		// load device list in GeoJSON from a Google spreadsheet
+		
 		function getDevList(entry){
 			devices=[]
 			$(entry).each(function(){
@@ -217,17 +187,13 @@
 			return devices
 		}
 		
+		
 		var url="https://spreadsheets.google.com/feeds/list/1mBWTyAp3tCnuunrK1Rbptb4rGDwByqX4NyUe8kxmR5Q/od6/public/basic?alt=json"
-		
-		
 		$.getJSON(url, function(data) {
 			var entry = data.feed.entry;
 			devices=getDevList(entry)
-			  
 			markerlayer=L.geoJson(devices, {
 				onEachFeature : function(device,layer){
-					
-					
 					jsonurl=device['properties']['url']+"/feed.json"
 					var channeljson 
 					$.getJSON(jsonurl,function(data){
@@ -265,13 +231,6 @@
 							popup.setContent(div);
 							popup.update();
 						});
-						
-							
-						
-														
-						
-						
-						
 					});
 				}
 			}).addTo(mymap);
