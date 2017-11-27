@@ -35,6 +35,10 @@
 			shape-rendering: crispEdges;
 		}
 		.bar { fill: steelblue; }
+		.icon-div{
+			text-align: center;
+			font: 15px arial, sand-serif
+		}
 		
 		</style>
 	<title>Airbender - Air Quality Monitoring Sensor Data</title>
@@ -151,7 +155,10 @@
 						iconUrl: chosen_icon,
 						iconSize: [30,30]
 					})
-			
+			devicon=L.divIcon({
+				className : "icon-div",
+				html: '<br>'+aqi+'<img src="'+chosen_icon+'" style="height: 30;width: 30;"/>'
+			})
 			//console.log(devicon.options.iconUrl)
 			return devicon		
 		}	
@@ -200,6 +207,7 @@
 						icon=getDevIcon(latestavgs['avgaqi'])
 						layer.setIcon(icon)
 						layer.bindPopup("Loading...",{maxWidth: 800})
+						
 						layer.on('click', function(e){
 							var popup = e.target.getPopup();
 							channeldata=getChannelData(channeljson)

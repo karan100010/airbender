@@ -165,21 +165,6 @@ function displayGraph(div,data=null){
     .x(function(d) { return x(d.created_at); })
     .y(function(d) { return y(d.aqi); });
 
-	/*data.forEach(function(d){
-		//console.log(d)
-		//console.log(x(d.created_at)+","+y(d.pm10));
-	
-		svgpm10		
-		.append("rect")
-		.attr("class","bar")
-		.attr("x", 30+x(d.created_at))
-		.attr("y", y(d.pm10))
-		.attr("width","1")
-		.attr("height",height-y(d.pm10));
-		//.attr("transform", "translate(30," + height + ")");
-	});
-	
-	*/
 	
 	d3.select(div).select("#svgpm10")			
 		.append("g")
