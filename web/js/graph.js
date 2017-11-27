@@ -153,8 +153,19 @@ function displayGraph(div,data=null){
 	
 	svgpm10=d3.select(div).select("#svgpm10").append("g")
 	
-	
-	data.forEach(function(d){
+	pm10line=d3.line()
+    .x(function(d) { return x(d.created_at); })
+    .y(function(d) { return y(d.pm10); });
+
+	pm25line=d3.line()
+    .x(function(d) { return x(d.created_at); })
+    .y(function(d) { return y(d.pm25); });
+
+	aqiline=d3.line()
+    .x(function(d) { return x(d.created_at); })
+    .y(function(d) { return y(d.aqi); });
+
+	/*data.forEach(function(d){
 		//console.log(d)
 		//console.log(x(d.created_at)+","+y(d.pm10));
 	
@@ -168,14 +179,55 @@ function displayGraph(div,data=null){
 		//.attr("transform", "translate(30," + height + ")");
 	});
 	
+	*/
 	
+	d3.select(div).select("#svgpm10")			
+		.append("g")
+		.attr("transform","translate(30,0)")
+		.append("path")
+		.datum(data)
+			.attr("fill", "none")
+			.attr("stroke", "steelblue")
+			.attr("stroke-linejoin", "round")
+			.attr("stroke-linecap", "round")
+			.attr("stroke-width", 1.5)
+			.attr("d", pm10line);
 		
+		
+	d3.select(div).select("#svgpm25")			
+		.append("g")
+		.attr("transform","translate(30,0)")
+		.append("path")
+		.datum(data)
+			.attr("fill", "none")
+			.attr("stroke", "orange")
+			.attr("stroke-linejoin", "round")
+			.attr("stroke-linecap", "round")
+			.attr("stroke-width", 1.5)
+			.attr("d", pm25line);
+	
+	
+	d3.select(div).select("#svgaqi")			
+		.append("g")
+		.attr("transform","translate(30,0)")
+		.append("path")
+		.datum(data)
+			.attr("fill", "none")
+			.attr("stroke", "red")
+			.attr("stroke-linejoin", "round")
+			.attr("stroke-linecap", "round")
+			.attr("stroke-width", 1.5)
+			.attr("d", aqiline);
+	
+	
+	
 	d3.select(div).select("#svgpm10")			
 		.append("g")
 		.attr("class", "axis")
 		.attr("transform", "translate(30," + height + ")")
 		.call(d3.axisBottom(x)
-              .tickFormat(d3.timeFormat("%H:%M")))
+              .tickFormat(d3.timeFormat("%H:%M"))
+              .ticks(4))
       .selectAll("text")	
         .style("text-anchor", "end")
         .attr("dx", "-.08em")
