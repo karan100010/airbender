@@ -1,0 +1,88 @@
+<html>
+	<head>
+	<meta charset="utf-8"/>
+	<!--Including cloud versions of Leaflet, D3 and JQuery Scripts-->
+	<!-- Current Versions - Leaflet 1.2.0, D3 V4, JQuery 2.1.1
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
+	<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	-->
+	
+	<!--Including Local Versions of Leaflet, D3 and JQuery Scripts -->
+	<!-- Current Versions - Leaflet 1.2.0, D3 V4.12.0, JQuery 3.2.1-->
+	<link rel="stylesheet" href="leaflet/leaflet.css" />
+	<script src="leaflet/leaflet.js"></script>
+	<script src="js/jquery-3.2.1.js"></script>
+	<script src="js/d3.js"></script>
+	
+	<!--Including our own copy of jsoma's tabletop script-->
+	<script src="js/tabletop.js"></script>
+
+	
+	<!--Including our own stylesheet and script -->
+	<link rel="stylesheet" href="css/mojomaps.css" />
+	<script src="js/mojomaps.js"></script>
+	<script src="js/airbender.js"></script>	
+	
+	<title>Airbender - Air Quality Monitoring Sensor Data</title>
+</head>
+<body>
+	<a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRBm8TskmGW651n0jYWuOP3f5IvZFN5Ea9XX5AolTJUmcj9-zgm6GI686AdMe_cD596ZV_2rCvbBk5B/pubhtml">See the source google sheet for this map</a>
+	<div id="map"></div>
+	<div class="popupGraph" id="log" width=100% height=100px></div>
+		
+		<script>
+			var mapdiv="map"
+			sheetkey="1T_CyUvfvTI6z9hV04AY8zk4zySrG3X1AjqnpFdkQMho"
+			var url="https://docs.google.com/spreadsheets/d/"+sheetkey+"/pubhtml"
+			//var url="https://spreadsheets.google.com/feeds/list/"+spreadsheet+"/od6/public/basic?alt=json"
+			//setupMojoMap(mapdiv,url,urltype="google")
+			setupAirbenderMap(mapdiv,url,urltype="google")
+		</script>
+	
+	
+	<center>
+		<div id="mapid"></div>
+	</center>
+	<script>
+		var maplayer="osm" //can be "osm" or "mapbox"
+		var mymap = L.map('mapid').setView([25.509815,77.201317 ], 6);
+		var popup = L.popup();
+		function onMapClick(e) {
+			popup
+				.setLatLng(e.latlng)
+				.setContent("You clicked the map at " + e.latlng.toString())
+				.openOn(mymap);
+		}
+		mymap.on('click', onMapClick);
+		tilelayer=getTileLayer(maptype=maplayer)
+		//Adding the selected tile layer
+		//tilelayer.addTo(mymap);
+		mymap.addLayer(tilelayer);
+		var url="https://spreadsheets.google.com/feeds/list/1mBWTyAp3tCnuunrK1Rbptb4rGDwByqX4NyUe8kxmR5Q/od6/public/basic?alt=json"
+		$.getJSON(url, function(data) {
+			var entry = data.feed.entry;
+			devices=getDevList(entry)
+			markerlayer=L.geoJson(devices, {
+				onEachFeature : function(device,layer){
+					jsonurl=device['properties']['url']+"/feed.json"
+					var channeljson 
+					$.getJSON(jsonurl,function(data){
+						channeljson=data
+						channeldata=getChannelData(channeljson)
+						latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
+						//console.log(latestavgs)
+						icon=getDevIcon(latestavgs['avgaqi'])
+						layer.setIcon(icon)
+						layer.bindPopup("Loading...",{maxWidth: 800})
+						layer.on('click', function(e){addAirbenderPopup(e,channeljson,device)});
+					});
+				}
+			}).addTo(mymap);
+		 });
+		
+	</script>
+
+</body>
+</html>

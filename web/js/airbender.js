@@ -1,4 +1,141 @@
 
+function setupAirbenderMap(mapdiv,url,urltype="google"){
+	mojomap=setupMojoMap(mapdiv,url,urltype="google")
+	console.log(mojomap)
+}
+
+function addAirbenderPopups(){
+	
+
+}
+
+function addAirbenderPopup(e,channeljson,device){
+	var popup = e.target.getPopup();
+	channeldata=getChannelData(channeljson)
+	channeldata=channeldata.slice(-20)
+	latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
+	var div = $('<div id="'+device['properties']['devname']+'" class="popupGraph" style="width: 600px; height:250px;">\
+					<b>'+device['properties']['devname']+'</b>\
+					<br>Readings averaged over last 10 mins\
+					<br><b>Date: </b>'+latestavgs['ts']['date']+'\
+					<br><b>Time: </b>'+latestavgs['ts']['time']+'\
+					<br><a href="'+device['properties']['url']+'" target="_blank">Datafeed</a>\
+					<table width=100%><tbody>\
+					<tr><td><td><b>Avg PM10: </b></td><td style="text-align: left"	>'+latestavgs['avgpm10']+'</td></td><td><td><b> Avg PM25: </b></td><td style="text-align: left">'+latestavgs['avgpm25']+'</td></td><td><td><b>Avg AQI: </b></td><td style="text-align: left">'+latestavgs['avgaqi']+'</td></td></tr>\
+					<tr><td><td><b>Avg SI PM10: </b></td><td style="text-align: left">'+latestavgs['avgsipm10']+'</td></td><td><td><b> Avg SI PM25: </b></td><td style="text-align: left">'+latestavgs['avgsipm25']+'</td></td><td><td></td></td></tr>\
+					</tbody></table><br>\
+					<table width=100%><tbody>\
+					<tr><td><div id="pm10"></div></td><td><div id="pm25"></div></td><td><div id="aqi"></div></td></tr>\
+					</tbody></table><br>\
+					</div>')[0];
+	
+	
+	popup.setContent(div);
+	popup.update();
+	displayGraph(div,channeldata);
+	popup.setContent(div);
+	popup.update();
+}
+
+function getChannelData(channeljson){
+	channeldata=[]
+	channeldef=channeljson['channel']
+	for (def in channeldef){
+		if (channeldef[def]=='Dust_PM25' ||  channeldef[def]=='PM2.5' || channeldef[def]=='PM 2.5' ){
+			channeldef[def]='pm25'
+		}
+		if (channeldef[def]=='Dust_PM10' || channeldef[def]=='PM 10'){
+			channeldef[def]='pm10'
+		}
+		if (channeldef[def]=='Dust_PM01' || channeldef[def]=='PM 1'){
+			channeldef[def]='pm1'
+		}
+		if (channeldef[def]=='TEMPERATURE' || channeldef[def]=='Temp C'){
+			channeldef[def]='temp'
+		}
+		if (channeldef[def]=='HUMIDITY' || channeldef[def]=='Humidity'){
+			channeldef[def]='humid'
+		}
+		if (channeldef[def]=='BATTERY' || channeldef[def]=='BattVolt'  || channeldef[def]=='BATTERY'){
+			channeldef[def]='batt'
+		}
+	}		
+	feeds=channeljson['feeds']
+	$(feeds).each(function(){
+		row={}
+		row['created_at']=this['created_at']
+		row['entry_id']=this['entry_id']
+		for (var key in this){
+			if (key.startsWith("field")){
+				row[channeldef[key]]=this[key]
+			}
+		}
+		channeldata.push(row)
+	});
+	return channeldata
+}
+function getDevIcon(aqi){
+	//console.log("AQI reported for icon selection="+aqi)
+	chosen_icon="icons/aqibase.png"
+	if (aqi<=50){
+		chosen_icon="icons/aqi0good.png"
+	}
+	else if(aqi>50 && aqi <=100){
+		chosen_icon="icons/aqi1satisfactory.png"
+	}
+	else if(aqi>100 && aqi <=200){
+		chosen_icon="icons/aqi2moderate.png"
+	}
+	else if(aqi>200 && aqi <=300){
+		chosen_icon="icons/aqi3poor.png"
+	}
+	else if(aqi>300 && aqi <=400){
+		chosen_icon="icons/aqi4vpoor.png"
+	}
+	else if(aqi>400){
+		chosen_icon="icons/aqi5severe.png"
+	}
+	var devicon=L.icon({
+				iconUrl: chosen_icon,
+				iconSize: [30,30]
+			})
+	devicon=L.divIcon({
+		className : "icon-div",
+		html: '<br>'+aqi+'<img src="'+chosen_icon+'" style="height: 30;width: 30;"/>'
+	})
+	//console.log(devicon.options.iconUrl)
+	return devicon		
+}	
+	
+		
+	
+// load device list in GeoJSON from a Google spreadsheet
+
+function getDevList(entry){
+	devices=[]
+	$(entry).each(function(){
+		template={
+			"geometry" : {
+				"type":"Point","coordinates":[]
+				},
+			"type" : "Feature",
+			"properties" : {}
+		}
+		template['properties']['id']=this.title.$t
+		valuepairs=this.content.$t.split(",")
+		$(valuepairs).each(function(){
+			key=$.trim(this.split(": ")[0]);
+			value=$.trim(this.split(": ")[1]);
+			template['properties'][key]=value;
+		});
+		template['geometry']['coordinates']=[template['properties']['longitude'],template['properties']['latitude']]
+		devices.push(template)		
+	});
+	return devices
+}
+
+
+
 
 function getSiPm25(pm25){
 	//console.log("PM25: "+pm25)
