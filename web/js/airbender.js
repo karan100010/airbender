@@ -1,19 +1,84 @@
 
-function setupAirbenderMap(mapdiv,url,urltype="google"){
-	mojomap=setupMojoMap(mapdiv,url,urltype="google")
-	console.log(mojomap)
-}
-
-function addAirbenderPopups(){
+function setupAirbenderMap(lmap,url,urltype="google"){
+	setupMojoMap(lmap,url,urltype="google");
+	var url="https://spreadsheets.google.com/feeds/list/1mBWTyAp3tCnuunrK1Rbptb4rGDwByqX4NyUe8kxmR5Q/od6/public/basic?alt=json"
+	//addThingspeakLayers(lmap,url)
+	//addAirbenderPopups(lmap);
+	//lmap.eachLayer(function(layer){console.log("Hello");layer.bindPopup('Hello')});
 	
-
 }
+
+
+function addAirVedaLayer(map,defaultmarker,data,tabletop){
+		devices=getPointsAsGeoJson(data)
+		markerlayer=L.geoJson(devices, {
+			onEachFeature : function(device,layer){
+								devicon=L.divIcon({
+											className : "icon-div",
+											html: '<img src="'+defaultmarker+'" style="height: 30;width: 30;"/>'
+										})
+								layer.setIcon(devicon)
+								airvedasheeturl=device['properties']['url']
+								
+								console.log(airvedasheeturl)
+								if (airvedasheeturl!=""){
+									var channeldata
+									Tabletop.init( { key: airvedasheeturl,
+										callback: function(data,tabletop){
+												if (data.hasOwnProperty(device['properties']['devname'])){
+													channeldata=data[device['properties']['devname']].elements
+													channeldata=channeldata.slice(-100)
+													//console.log(channeldata)
+													
+													latestavgs=getLatestAvgs(device['properties']['devname'],channeldata)
+													icon=getDevIcon(latestavgs['avgaqi'])
+													//console.log(icon)
+													layer.setIcon(icon)
+													layer.bindPopup("Loading...",{maxWidth: 800})
+													layer.on('click', function(e){addAirbenderPopup(e,channeldata,device)});
+												}
+											
+											},
+										simpleSheet: false } )
+								}
+							}
+		}).addTo(map);
+}
+
+function addThingspeakLayer(map,defaultmarker,data,tabletop){
+			featureCollection=getPointsAsGeoJson(data)
+			devices=getPointsAsGeoJson(data)
+			markerlayer=L.geoJson(devices, {
+				onEachFeature : function(device,layer){
+					
+					
+					jsonurl=device['properties']['url']+"/feed.json"
+					var channeljson
+					$.getJSON(jsonurl,function(data){
+						channeljson=data
+						channeldata=getChannelData(channeljson)
+						//console.log(channeldata)
+						latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
+						icon=getDevIcon(latestavgs['avgaqi'])
+						//console.log(icon)
+						layer.setIcon(icon)
+						layer.bindPopup("Loading...",{maxWidth: 800})
+						layer.on('click', function(e){addAirbenderPopup(e,channeljson,device)});
+					});
+				}
+			}).addTo(map);
+		 
+	
+}
+
+
 
 function addAirbenderPopup(e,channeljson,device){
 	var popup = e.target.getPopup();
+	console.log(channeljson)	
 	channeldata=getChannelData(channeljson)
-	channeldata=channeldata.slice(-20)
-	latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
+	channeldata2=channeldata.slice(-20)
+	latestavgs=getLatestAvgs(device['properties']['devname'],channeldata2)
 	var div = $('<div id="'+device['properties']['devname']+'" class="popupGraph" style="width: 600px; height:250px;">\
 					<b>'+device['properties']['devname']+'</b>\
 					<br>Readings averaged over last 10 mins\
@@ -38,6 +103,11 @@ function addAirbenderPopup(e,channeljson,device){
 }
 
 function getChannelData(channeljson){
+	console.log(channeljson)
+	if (channeljson instanceof Array)
+	{
+		return channeljson
+	}
 	channeldata=[]
 	channeldef=channeljson['channel']
 	for (def in channeldef){
@@ -188,7 +258,6 @@ function getSiPm10(pm10){
 		
 function getLatestAvgs(id,channeldata){
 		channeldata=channeldata.slice(-10)
-		//console.log(channeldata)
 		sumsipm25=0.0
 		sumsipm10=0.0
 		sumaqi=0.0
@@ -221,8 +290,9 @@ function getLatestAvgs(id,channeldata){
 			sumaqi=sumaqi+aqi
 			ts=channeldata[row].created_at
 		}
-		ts=channeldata[row].created_at
-		
+		//console.log(row)
+		//ts=channeldata[row].created_at
+		console.log(ts)
 		avgsipm25=sumsipm25/10
 		avgsipm10=sumsipm10/10
 		avgaqi=sumaqi/10
@@ -234,11 +304,25 @@ function getLatestAvgs(id,channeldata){
 		response['avgsipm10']=Math.round(avgsipm10)
 		response['avgpm10']=Math.round(avgpm10)
 		response['avgpm25']=Math.round(avgpm25)
-		response['ts']={"date":ts.split("T")[0],"time":ts.split("T")[1].split("Z")[0]}
+	
+		if (isDate(ts)){
+			response['ts']={"date":ts.getDate(),"time":ts.getTime()}
+		}
+		else if (ts.indexOf("T")!=-1){
+			response['ts']={"date":ts.split("T")[0],"time":ts.split("T")[1].split("Z")[0]}
+		}
+		else if (ts==null){
+			response['ts']=null
+		}
+		else{
+			response['ts']={"date":ts.split(' ')[0],"time":ts.split(' ')[1]}
+		}
 		return response
 }
 
-
+function isDate (value) {
+return value instanceof Date;
+};
 function displayGraph(div,data=null){
 	//console.log(div)
 	parseTime=d3.timeParse("%Y-%m-%dT%H:%M:%SZ")

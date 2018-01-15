@@ -37,52 +37,16 @@
 			sheetkey="1T_CyUvfvTI6z9hV04AY8zk4zySrG3X1AjqnpFdkQMho"
 			var url="https://docs.google.com/spreadsheets/d/"+sheetkey+"/pubhtml"
 			//var url="https://spreadsheets.google.com/feeds/list/"+spreadsheet+"/od6/public/basic?alt=json"
+			var mymap = L.map('map').setView([25.509815,77.201317 ], 6);
 			//setupMojoMap(mapdiv,url,urltype="google")
-			setupAirbenderMap(mapdiv,url,urltype="google")
+			markers={}
+			//setupMojoMap(mymap,url,urltype="google")
+			setupAirbenderMap(mymap,url,urltype="google")
+			
 		</script>
 	
 	
-	<center>
-		<div id="mapid"></div>
-	</center>
-	<script>
-		var maplayer="osm" //can be "osm" or "mapbox"
-		var mymap = L.map('mapid').setView([25.509815,77.201317 ], 6);
-		var popup = L.popup();
-		function onMapClick(e) {
-			popup
-				.setLatLng(e.latlng)
-				.setContent("You clicked the map at " + e.latlng.toString())
-				.openOn(mymap);
-		}
-		mymap.on('click', onMapClick);
-		tilelayer=getTileLayer(maptype=maplayer)
-		//Adding the selected tile layer
-		//tilelayer.addTo(mymap);
-		mymap.addLayer(tilelayer);
-		var url="https://spreadsheets.google.com/feeds/list/1mBWTyAp3tCnuunrK1Rbptb4rGDwByqX4NyUe8kxmR5Q/od6/public/basic?alt=json"
-		$.getJSON(url, function(data) {
-			var entry = data.feed.entry;
-			devices=getDevList(entry)
-			markerlayer=L.geoJson(devices, {
-				onEachFeature : function(device,layer){
-					jsonurl=device['properties']['url']+"/feed.json"
-					var channeljson 
-					$.getJSON(jsonurl,function(data){
-						channeljson=data
-						channeldata=getChannelData(channeljson)
-						latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
-						//console.log(latestavgs)
-						icon=getDevIcon(latestavgs['avgaqi'])
-						layer.setIcon(icon)
-						layer.bindPopup("Loading...",{maxWidth: 800})
-						layer.on('click', function(e){addAirbenderPopup(e,channeljson,device)});
-					});
-				}
-			}).addTo(mymap);
-		 });
-		
-	</script>
+	
 
 </body>
 </html>
