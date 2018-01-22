@@ -13,37 +13,52 @@ function addAirVedaLayer(map,defaultmarker,data,tabletop){
 		devices=getPointsAsGeoJson(data)
 		markerlayer=L.geoJson(devices, {
 			onEachFeature : function(device,layer){
-								devicon=L.divIcon({
-											className : "icon-div",
-											html: '<img src="'+defaultmarker+'" style="height: 30;width: 30;"/>'
-										})
-								layer.setIcon(devicon)
 								airvedasheeturl=device['properties']['url']
-								
+								devicon=L.divIcon({
+												className : "icon-div",
+												html: '<img src="'+defaultmarker+'" style="height: 30;width: 30;"/>'
+												})
+								layer.setIcon(devicon)
 								//console.log(airvedasheeturl)
 								if (airvedasheeturl!=""){
 									var channeldata
+									console.log(airvedasheeturl)
+										
 									Tabletop.init( { key: airvedasheeturl,
 										callback: function(data,tabletop){
+												
 												if (data.hasOwnProperty(device['properties']['devname'])){
 													channeldata=data[device['properties']['devname']].elements
 													channeldata=channeldata.slice(-100)
 													
 													latestavgs=getLatestAvgs(device['properties']['devname'],channeldata)
+													console.log(channeldata)
 													icon=getDevIcon(latestavgs['avgaqi'])
 													//console.log(icon)
 													layer.setIcon(icon)
 													layer.bindPopup("Loading...",{maxWidth: 800})
-													console.log("CHanneldata, Airveda")
-													console.log(channeldata)
-													layer.on('click', function(e){addAirbenderPopup(e,channeldata,device)});
+													//console.log("CHanneldata, Airveda")
+													
 												}
-											
 											},
 										simpleSheet: false } )
-								}
+									}
+									layer.on('click', function(e){
+															console.log(e)
+															Tabletop.init( { key: airvedasheeturl,
+																callback: function(data,tabletop){
+												
+																		if (data.hasOwnProperty(device['properties']['devname'])){
+																			channeldata=data[device['properties']['devname']].elements
+																			channeldata=channeldata.slice(-100)
+																			addAirbenderPopup(e,channeldata,device)
+																			
+																		}
+																}
+															})
+														})
 							}
-		}).addTo(map);
+	}).addTo(map);
 }
 
 function addThingspeakLayer(map,defaultmarker,data,tabletop){
@@ -53,18 +68,22 @@ function addThingspeakLayer(map,defaultmarker,data,tabletop){
 				onEachFeature : function(device,layer){
 					jsonurl=device['properties']['url']+"/feed.json"
 					var channeljson
+					var channeldata
 					$.getJSON(jsonurl,function(data){
 						channeljson=data
 						channeldata=getChannelData(channeljson)
-						//console.log(channeldata)
 						latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
+						console.log(channeldata)
 						icon=getDevIcon(latestavgs['avgaqi'])
 						//console.log(icon)
 						layer.setIcon(icon)
 						layer.bindPopup("Loading...",{maxWidth: 800})
-						console.log("Channeldata, Thingspeak")
-						console.log(channeljson)
-						layer.on('click', function(e){addAirbenderPopup(e,channeljson,device)});
+						//console.log("Channeldata, Thingspeak")
+						//channeldata=getChannelData(channeljson)
+						layer.on('click', function(e){
+								channeldata=getChannelData(channeljson)
+								addAirbenderPopup(e,channeldata,device)
+							});
 					});
 				}
 			}).addTo(map);
@@ -74,10 +93,9 @@ function addThingspeakLayer(map,defaultmarker,data,tabletop){
 
 
 
-function addAirbenderPopup(e,channeljson,device){
+function addAirbenderPopup(e,channeldata,device){
+	console.log(channeldata)
 	var popup = e.target.getPopup();
-	console.log(channeljson)	
-	channeldata=getChannelData(channeljson)
 	channeldata2=channeldata.slice(-20)
 	latestavgs=getLatestAvgs(device['properties']['devname'],channeldata2)
 	var div = $('<div id="'+device['properties']['devname']+'" class="popupGraph" style="width: 600px; height:250px;">\
@@ -98,13 +116,13 @@ function addAirbenderPopup(e,channeljson,device){
 	
 	popup.setContent(div);
 	popup.update();
-	displayGraph(div,channeldata);
+	graphdata=channeldata
+	displayGraph(div,graphdata);
 	popup.setContent(div);
 	popup.update();
 }
 
 function getChannelData(channeljson){
-	console.log(channeljson)
 	if (channeljson instanceof Array)
 	{
 		return channeljson
@@ -318,7 +336,9 @@ function getLatestAvgs(id,channeldata){
 		else{
 			response['ts']={"date":ts.split(' ')[0],"time":ts.split(' ')[1]}
 		}
+		console.log(response)
 		return response
+		
 }
 
 function isDate (value) {
@@ -326,7 +346,13 @@ return value instanceof Date;
 };
 function displayGraph(div,data=null){
 	//console.log(div)
-	parseTime=d3.timeParse("%Y-%m-%dT%H:%M:%SZ")
+	console.log(data)
+	if (data[0]['created_at'].indexOf("T")!=-1){
+		parseTime=d3.timeParse("%Y-%m-%dT%H:%M:%SZ")
+	}
+	else{
+		parseTime=d3.timeParse("%Y-%m-%d %H:%M:%S")
+	}
 	//console.log(parseTime(data[0]['created_at']))
 	//console.log(data[0]['created_at'])
 	gheight=130
