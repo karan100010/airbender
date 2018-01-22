@@ -50,8 +50,6 @@ function addThingspeakLayer(map,defaultmarker,data,tabletop){
 			devices=getPointsAsGeoJson(data)
 			markerlayer=L.geoJson(devices, {
 				onEachFeature : function(device,layer){
-					
-					
 					jsonurl=device['properties']['url']+"/feed.json"
 					var channeljson
 					$.getJSON(jsonurl,function(data){
