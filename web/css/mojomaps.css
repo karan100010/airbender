@@ -1,1 +1,44 @@
-/home/arjun/dev/mojomaps/web/css/mojomaps.css
+.popupGraph {
+			font: 11px arial, sans-serif;
+}	
+table, th, td {
+				border: 0px solid black;
+				font: 11px arial, sans-serif;
+				text-align: right;
+}
+.axis path,
+.axis line {
+		fill: none;
+		stroke: grey;
+		stroke-width: 1;
+		shape-rendering: crispEdges;
+}
+.bar {
+	fill: steelblue; 
+}
+.icon-div{
+		text-align: center;
+		font: 15px arial, sand-serif
+}
+
+#map {
+  width: 100%;
+  height: 500px;
+}
+
+svg {
+  position: relative;
+}
+
+
+.shape {
+  fill: #f00;
+  fill-opacity: .2;
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+#mapid {
+ width: 100%;
+  height: 500px;
+}
