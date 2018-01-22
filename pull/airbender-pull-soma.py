@@ -68,7 +68,9 @@ class AirBender(SoMACyborg):
 		
 		driver = webdriver.Firefox(firefox_profile=firefox_profile)
 		self.driver=driver
-	def get_dev_data(self,dev):
+	def airveda_get_dev_data(self,dev):
+		if os.path.exists(os.path.join(self.sessiondownloaddir,str(dev)+".csv")):
+			os.rename(os.path.join(self.sessiondownloaddir,str(dev)+".csv"),os.path.join(self.sessiondownloaddir,str(dev)+"-prev.csv"))
 		self.goto_url("http://api.airveda.com/core/download/")
 		time.sleep(10)
 		self.driver.find_element_by_id("checkbox2").click()
@@ -82,15 +84,21 @@ class AirBender(SoMACyborg):
 		self.driver.find_element_by_class_name("select2-search__field").send_keys(Keys.RETURN)
 		time.sleep(3)
 		self.driver.find_element_by_id("download_button").click()
-		time.sleep(30)
+		time.sleep(20)
 		os.rename(os.path.join(self.sessiondownloaddir,"airveda_data.csv"),os.path.join(self.sessiondownloaddir,str(dev)+".csv"))
 		return os.path.join(self.sessiondownloaddir,str(dev)+".csv")
-
+	def airveda_update(self):
+		devsheetdf=self.airvedadevsheet.worksheet_by_title("Sheet1").get_as_df()
+		for dev in devsheetdf.devname:
+			print self.airveda_get_dev_data(dev)
+	
 if __name__=="__main__":
 	airvedaurl="http://api.airveda.com/core/download/"
-	sks=AirBender("/home/arjun/ids/sks.conf")
+	sks=AirBender("/home/arjun/ids/sks.conf",headless=True)
 	sks.goto_url("http://api.airveda.com/core/download/")
 	time.sleep(10)
 	sks.driver.find_element_by_name("username").send_keys(sks.airvedausername)
 	sks.driver.find_element_by_name("password").send_keys(sks.airvedapassword)
 	sks.driver.find_element_by_name("username").send_keys(Keys.RETURN)
+		
+

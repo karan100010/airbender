@@ -20,7 +20,7 @@ function addAirVedaLayer(map,defaultmarker,data,tabletop){
 								layer.setIcon(devicon)
 								airvedasheeturl=device['properties']['url']
 								
-								console.log(airvedasheeturl)
+								//console.log(airvedasheeturl)
 								if (airvedasheeturl!=""){
 									var channeldata
 									Tabletop.init( { key: airvedasheeturl,
@@ -28,13 +28,14 @@ function addAirVedaLayer(map,defaultmarker,data,tabletop){
 												if (data.hasOwnProperty(device['properties']['devname'])){
 													channeldata=data[device['properties']['devname']].elements
 													channeldata=channeldata.slice(-100)
-													//console.log(channeldata)
 													
 													latestavgs=getLatestAvgs(device['properties']['devname'],channeldata)
 													icon=getDevIcon(latestavgs['avgaqi'])
 													//console.log(icon)
 													layer.setIcon(icon)
 													layer.bindPopup("Loading...",{maxWidth: 800})
+													console.log("CHanneldata, Airveda")
+													console.log(channeldata)
 													layer.on('click', function(e){addAirbenderPopup(e,channeldata,device)});
 												}
 											
@@ -61,6 +62,8 @@ function addThingspeakLayer(map,defaultmarker,data,tabletop){
 						//console.log(icon)
 						layer.setIcon(icon)
 						layer.bindPopup("Loading...",{maxWidth: 800})
+						console.log("Channeldata, Thingspeak")
+						console.log(channeljson)
 						layer.on('click', function(e){addAirbenderPopup(e,channeljson,device)});
 					});
 				}
@@ -264,9 +267,9 @@ function getLatestAvgs(id,channeldata){
 		for (row in channeldata){
 			
 			pm25=parseFloat(channeldata[row].pm25)
-			if (pm25==NaN){
-				console.log(channeldata)
-			}
+			//if (pm25==NaN){
+			//	console.log(channeldata)
+			//}
 			
 			pm10=parseFloat(channeldata[row].pm10)
 			sumpm10=sumpm10+pm10
@@ -290,7 +293,7 @@ function getLatestAvgs(id,channeldata){
 		}
 		//console.log(row)
 		//ts=channeldata[row].created_at
-		console.log(ts)
+		//console.log(ts)
 		avgsipm25=sumsipm25/10
 		avgsipm10=sumsipm10/10
 		avgaqi=sumaqi/10
