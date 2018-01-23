@@ -19,7 +19,7 @@ function addAirVedaLayer(map,defaultmarker,data,tabletop){
 												html: '<img src="'+defaultmarker+'" style="height: 30;width: 30;"/>'
 												})
 								layer.setIcon(devicon)
-								//console.log(airvedasheeturl)
+								console.log(airvedasheeturl)
 								if (airvedasheeturl!=""){
 									var channeldata
 									console.log(airvedasheeturl)
@@ -32,7 +32,7 @@ function addAirVedaLayer(map,defaultmarker,data,tabletop){
 													channeldata=channeldata.slice(-100)
 													
 													latestavgs=getLatestAvgs(device['properties']['devname'],channeldata)
-													console.log(channeldata)
+													//console.log(channeldata)
 													icon=getDevIcon(latestavgs['avgaqi'])
 													//console.log(icon)
 													layer.setIcon(icon)
@@ -73,7 +73,7 @@ function addThingspeakLayer(map,defaultmarker,data,tabletop){
 						channeljson=data
 						channeldata=getChannelData(channeljson)
 						latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
-						console.log(channeldata)
+						//console.log(channeldata)
 						icon=getDevIcon(latestavgs['avgaqi'])
 						//console.log(icon)
 						layer.setIcon(icon)
@@ -94,7 +94,7 @@ function addThingspeakLayer(map,defaultmarker,data,tabletop){
 
 
 function addAirbenderPopup(e,channeldata,device){
-	console.log(channeldata)
+	//console.log(channeldata)
 	var popup = e.target.getPopup();
 	channeldata2=channeldata.slice(-20)
 	latestavgs=getLatestAvgs(device['properties']['devname'],channeldata2)
@@ -346,7 +346,7 @@ return value instanceof Date;
 };
 function displayGraph(div,data=null){
 	//console.log(div)
-	console.log(data)
+	//console.log(data)
 	if (data[0]['created_at'].indexOf("T")!=-1){
 		parseTime=d3.timeParse("%Y-%m-%dT%H:%M:%SZ")
 	}
