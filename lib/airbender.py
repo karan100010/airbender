@@ -5,9 +5,6 @@ from livdatdatastream import *
 from bs4 import BeautifulSoup
 
 # Extend init with *args and **kwargs
-
-
-
 		
 class AirBender(DataBender):
 	def __init__(self,*args, **kwargs):
@@ -16,8 +13,7 @@ class AirBender(DataBender):
 		self.airvedapassword = self.config.get("Airveda","password")
 		self.airvedadevicelist = self.config.get("Airveda","devicelist")
 		self.airvedaurl = self.config.get("Airveda","airvedaurl")
-		self.thingspeakdevicelist = self.config.get("Thingspeak","devicelist")
-				
+		self.thingspeakdevicelist = self.config.get("Thingspeak","devicelist")				
 		counter=0
 		try:
 			print "Trying to get airvedadevsheet"
@@ -87,7 +83,7 @@ class AirBender(DataBender):
 			channeljson=json.loads(f.read())
 		channeldata=pandas.DataFrame(columns=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt'])
 		channeldef=channeljson['channel']
-		print channeldef
+		#print channeldef
 		for defn in channeldef.keys():
 			if channeldef[defn]=='Dust_PM25' or  channeldef[defn]=='PM2.5' or channeldef[defn]=='PM 2.5':
 				channeldef[defn]='pm25'
