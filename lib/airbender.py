@@ -104,15 +104,15 @@ class AirBender(DataBender):
 		ds.save_stream()
 		tsval=datetime.now()
 		remark="Trying update at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-		self.avdf.at[row.Index,"remarks"]=remark
+		self.avdf.at[row.name,"remarks"]=remark
 		try:
 			devfile = self.airveda_get_dev_data(row)
 			downloadedfile=devfile
 			print devfile
 			tsval=datetime.now()
 			remark="Successful download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.avdf.at[row.Index,"remarks"]=remark
-			self.avdf.at[row.Index,"localfile"]=devfile
+			self.avdf.at[row.name,"remarks"]=remark
+			self.avdf.at[row.name,"localfile"]=devfile
 			cdata=self.translateairvedadata(devfile)
 			cdata=self.add_airbender_aqi_column(cdata)
 			ds.append_data(cdata)
@@ -121,7 +121,7 @@ class AirBender(DataBender):
 			print exception
 			tsval=datetime.now()
 			remark="Failed download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.avdf.at[row.Index,"remarks"]=remark
+			self.avdf.at[row.name,"remarks"]=remark
 			
 		self.airvedadevsheet.worksheet_by_title("Sheet1").set_dataframe(self.avdf,(1,1))
 		return downloadedfile
@@ -137,15 +137,15 @@ class AirBender(DataBender):
 		
 		tsval=datetime.now()
 		remark="Trying update at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-		self.tsdf.at[row.Index,"remarks"]=remark
+		self.tsdf.at[row.name,"remarks"]=remark
 		
 		try:
 			filepath=self.thingspeak_get_dev_data(row)
 			downloadedfile=filepath
 			tsval=datetime.now()
 			remark="Successful download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.tsdf.at[row.Index,"remarks"]=remark
-			self.tsdf.at[row.Index,"localfile"]=filepath
+			self.tsdf.at[row.name,"remarks"]=remark
+			self.tsdf.at[row.name,"localfile"]=filepath
 			cdata=self.translatethingspeakdata(filepath)
 			cdata=self.add_airbender_aqi_column(cdata)
 			ds.append_data(cdata)
@@ -154,7 +154,7 @@ class AirBender(DataBender):
 			print exception
 			tsval=datetime.now()
 			remark="Failed download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.tsdf.at[row.Index,"remarks"]=remark	
+			self.tsdf.at[row.name,"remarks"]=remark	
 		self.thingspeakdevsheet.worksheet_by_title("Sheet1").set_dataframe(self.tsdf,(1,1))
 		return downloadedfile
 	
@@ -222,14 +222,14 @@ class AirBender(DataBender):
 	
 	def airveda_update(self):
 		downloadedfiles={}
-		for row in self.avdf.itertuples():
+		for index,row in self.avdf.iterrows():
 			downloadedfile=self.airveda_update_device(row)
 			downloadedfiles[row.devname]=downloadedfile
 		return downloadedfiles
 	
 	def thingspeak_update(self):
 		downloadedfiles={}
-		for row in self.tsdf.itertuples():
+		for index,row in self.tsdf.iterrows():
 			downloadedfile=self.thingspeak_update_device(row)
 			downloadedfiles[row.devname]=downloadedfile
 		return downloadedfiles
