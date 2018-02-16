@@ -2,7 +2,7 @@ import os,sys
 sys.path.append("/opt/airbender/lib")
 from airbender import *
 from livdatdatastream import *
-a=AirBender("/home/arjun/ids/sks.conf")
+a=AirBender(sys.argv[1])
 a.airveda_login()
 time.sleep(10)
 
