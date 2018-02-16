@@ -31,11 +31,11 @@ class AirBender(DataBender):
 			print "Could not get thingspeaksheet " + self.thingspeakdevicelist
 		for dev in self.tsdf.devname:
 			print dev
-			ds=DataStream("/home/arjun/ids/airbender/data/"+str(dev),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
+			ds=DataStream(os.path.join(self.datastreampath,str(dev)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 			ds.save_stream()
 		for dev in self.avdf.devname:
 			print dev
-			ds=DataStream("/home/arjun/ids/airbender/data/"+str(dev),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
+			ds=DataStream(os.path.join(self.datastreampath,str(dev)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 			ds.save_stream()
 
 		
