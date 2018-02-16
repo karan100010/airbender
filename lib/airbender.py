@@ -21,6 +21,7 @@ class AirBender(DataBender):
 			self.airvedadevsheet=self.gc.open_by_key(self.airvedadevicelist)
 			self.avdf=self.airvedadevsheet.worksheet_by_title("Sheet1").get_as_df()
 			self.avdf.devname=self.avdf.devname.apply(str)
+			self.avdf.lastupdate=self.avdf.lastupdate.apply(str)
 			
 		except:
 			print "Could not get airvedadevsheet " + self.airvedadevicelist
@@ -30,6 +31,7 @@ class AirBender(DataBender):
 			self.thingspeakdevsheet=self.gc.open_by_key(self.thingspeakdevicelist)
 			self.tsdf=self.thingspeakdevsheet.worksheet_by_title("Sheet1").get_as_df()
 			self.tsdf.devname=self.tsdf.devname.apply(str)
+			self.tsdf.lastupdate=self.tsdf.lastupdate.apply(str)
 		except:
 			print "Could not get thingspeaksheet " + self.thingspeakdevicelist
 		for dev in self.tsdf.devname:
@@ -115,6 +117,7 @@ class AirBender(DataBender):
 			self.avdf.at[row.name,"localfile"]=devfile
 			cdata=self.translateairvedadata(devfile)
 			cdata=self.add_airbender_aqi_column(cdata)
+			self.avdf.at[row.name,"lastupdate"]=cdata.at[len(cdata)-1,"created_at"]
 			ds.append_data(cdata)
 			ds.save_stream()
 		except Exception as exception:
@@ -148,6 +151,10 @@ class AirBender(DataBender):
 			self.tsdf.at[row.name,"localfile"]=filepath
 			cdata=self.translatethingspeakdata(filepath)
 			cdata=self.add_airbender_aqi_column(cdata)
+			lastupdate=cdata.at[len(cdata)-1,"created_at"].strftime("%Y-%m-%d %H:%M:%S")
+			print "Last update at", lastupdate
+			
+			self.tsdf.at[row.name,"lastupdate"]=lastupdate
 			ds.append_data(cdata)
 			ds.save_stream()
 		except Exception as exception:
