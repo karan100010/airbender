@@ -117,7 +117,10 @@ class AirBender(DataBender):
 			self.avdf.at[row.name,"localfile"]=devfile
 			cdata=self.translateairvedadata(devfile)
 			cdata=self.add_airbender_aqi_column(cdata)
-			self.avdf.at[row.name,"lastupdate"]=cdata.at[len(cdata)-1,"created_at"]
+			lastupdate=cdata.at[len(cdata)-1,"created_at"].strftime("%Y-%m-%d %H:%M:%S")
+			print "Last update at", lastupdate
+			
+			self.avdf.at[row.name,"lastupdate"]=lastupdate
 			ds.append_data(cdata)
 			ds.save_stream()
 		except Exception as exception:
