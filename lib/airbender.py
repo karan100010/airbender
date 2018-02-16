@@ -20,6 +20,8 @@ class AirBender(DataBender):
 			print "Trying to get airvedadevsheet"
 			self.airvedadevsheet=self.gc.open_by_key(self.airvedadevicelist)
 			self.avdf=self.airvedadevsheet.worksheet_by_title("Sheet1").get_as_df()
+			self.avdf.devname=self.avdf.devname.apply(str)
+			
 		except:
 			print "Could not get airvedadevsheet " + self.airvedadevicelist
 		
@@ -27,6 +29,7 @@ class AirBender(DataBender):
 			print "Trying to get thingspeakdevsheet"
 			self.thingspeakdevsheet=self.gc.open_by_key(self.thingspeakdevicelist)
 			self.tsdf=self.thingspeakdevsheet.worksheet_by_title("Sheet1").get_as_df()
+			self.tsdf.devname=self.tsdf.devname.apply(str)
 		except:
 			print "Could not get thingspeaksheet " + self.thingspeakdevicelist
 		for dev in self.tsdf.devname:
@@ -37,6 +40,22 @@ class AirBender(DataBender):
 			print dev
 			ds=DataStream(os.path.join(self.datastreampath,str(dev)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 			ds.save_stream()
+	
+	def lookup_device(self,devname):
+		device={}
+		try:
+			device['data']=self.tsdf.loc[self.tsdf.devname==devname].iloc[0]
+			device['type']="thingspeak"
+			return device
+		except IndexError as exception:
+			print "Not in TSDF"
+		try:
+			device['data']=self.avdf.loc[self.avdf.devname==devname].iloc[0]
+			device['type']="airveda"
+			return device
+		except IndexError as exception:
+			print "Not in AVDF"
+		
 
 		
 	def airveda_login(self):
@@ -47,7 +66,7 @@ class AirBender(DataBender):
 		self.driver.find_element_by_name("username").send_keys(Keys.RETURN)
 	
 	def airveda_get_dev_data(self,row):
-		dev=row['devname']
+		dev=row.devname
 		if os.path.exists(os.path.join(self.sessiondownloaddir,str(dev)+".csv")):
 			os.rename(os.path.join(self.sessiondownloaddir,str(dev)+".csv"),os.path.join(self.sessiondownloaddir,str(dev)+"-prev.csv"))
 		self.goto_url(self.airvedaurl)
@@ -67,23 +86,33 @@ class AirBender(DataBender):
 		os.rename(os.path.join(self.sessiondownloaddir,"airveda_data.csv"),os.path.join(self.sessiondownloaddir,str(dev)+".csv"))
 		return os.path.join(self.sessiondownloaddir,str(dev)+".csv")
 	
+	def thingspeak_get_dev_data(self,row):
+		latestjson=json.loads(urllib2.urlopen(row.url+"/feed.json").read())
+		filepath=os.path.join(self.sessiondownloaddir,row.devname+".json")
+		if os.path.exists(os.path.join(self.sessiondownloaddir,row.devname+".json")):
+			os.rename(os.path.join(self.sessiondownloaddir,row.devname+".json"),os.path.join(self.sessiondownloaddir,row.devname+"-prev.json"))
+		with open(filepath,"w") as f:
+			f.write(json.dumps(latestjson))
+		print filepath
+		return filepath
+			
 	def airveda_update_device(self,avdfrow):
 		downloadedfile=None
 		row=avdfrow
-		print row['devname']
-		ds=DataStream("/home/arjun/ids/airbender/data/"+str(row['devname']),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
+		print row.devname
+		ds=DataStream("/home/arjun/ids/airbender/data/"+str(row.devname),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 		ds.save_stream()
 		tsval=datetime.now()
 		remark="Trying update at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-		self.avdf.set_value(row.name,"remarks",remark)
+		self.avdf.at[row.Index,"remarks"]=remark
 		try:
 			devfile = self.airveda_get_dev_data(row)
 			downloadedfile=devfile
 			print devfile
 			tsval=datetime.now()
 			remark="Successful download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.avdf.set_value(row.name,"remarks",remark)
-			self.avdf.set_value(row.name,"localfile",devfile)
+			self.avdf.at[row.Index,"remarks"]=remark
+			self.avdf.at[row.Index,"localfile"]=devfile
 			cdata=self.translateairvedadata(devfile)
 			cdata=self.add_airbender_aqi_column(cdata)
 			ds.append_data(cdata)
@@ -92,48 +121,31 @@ class AirBender(DataBender):
 			print exception
 			tsval=datetime.now()
 			remark="Failed download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.avdf.set_value(row.name,"remarks",remark)
+			self.avdf.at[row.Index,"remarks"]=remark
 			
 		self.airvedadevsheet.worksheet_by_title("Sheet1").set_dataframe(self.avdf,(1,1))
 		return downloadedfile
-		
-	def airveda_update(self):
-		downloadedfiles={}
-		for index,row in self.avdf.iterrows():
-			downloadedfile=self.airveda_update_device(row)
-			downloadedfiles[row['devname']]=downloadedfile
-		return downloadedfiles
 	
-	def thingspeak_get_dev_data(self,row):
-		latestjson=json.loads(urllib2.urlopen(row['url']+"/feed.json").read())
-		filepath=os.path.join(self.sessiondownloaddir,row['devname']+".json")
-		if os.path.exists(os.path.join(self.sessiondownloaddir,row['devname']+".json")):
-			os.rename(os.path.join(self.sessiondownloaddir,row['devname']+".json"),os.path.join(self.sessiondownloaddir,row['devname']+"-prev.json"))
-		with open(filepath,"w") as f:
-			f.write(json.dumps(latestjson))
-		print filepath
-		return filepath
-		
 	def thingspeak_update_device(self,tsdfrow):
 		downloadedfile=None
 		row=tsdfrow
 		
 		
-		print row['devname']
-		ds=DataStream(os.path.join(self.datastreampath,str(row['devname'])),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
+		print row.devname
+		ds=DataStream(os.path.join(self.datastreampath,str(row.devname)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 		ds.save_stream()
 		
 		tsval=datetime.now()
 		remark="Trying update at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-		self.tsdf.set_value(row.name,"remarks",remark)
+		self.tsdf.at[row.Index,"remarks"]=remark
 		
 		try:
 			filepath=self.thingspeak_get_dev_data(row)
 			downloadedfile=filepath
 			tsval=datetime.now()
 			remark="Successful download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.tsdf.set_value(row.name,"remarks",remark)
-			self.tsdf.set_value(row.name,"localfile",filepath)
+			self.tsdf.at[row.Index,"remarks"]=remark
+			self.tsdf.at[row.Index,"localfile"]=filepath
 			cdata=self.translatethingspeakdata(filepath)
 			cdata=self.add_airbender_aqi_column(cdata)
 			ds.append_data(cdata)
@@ -142,19 +154,32 @@ class AirBender(DataBender):
 			print exception
 			tsval=datetime.now()
 			remark="Failed download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.tsdf.set_value(row.name,"remarks",remark)	
+			self.tsdf.at[row.Index,"remarks"]=remark	
 		self.thingspeakdevsheet.worksheet_by_title("Sheet1").set_dataframe(self.tsdf,(1,1))
 		return downloadedfile
 	
+	def translateairvedadata(self,channelfile):
+		try:
+			channelfiledata=pandas.read_csv(channelfile,parse_dates=True)
+		except:
+			print "Could not read file " + channelfile
+			return None
+		cfdata=pandas.DataFrame(columns=["created_at","pm25","pm10","aqi","co2"])
+		if len(cfdata.columns)!=len(channelfiledata.columns):
+			print "Column mismatch in file " + channelfile
+			return None
+		channelfiledata.columns=cfdata.columns
+		channeldata=pandas.DataFrame(columns=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt'])
+		channeldata=channeldata.append(channelfiledata).drop_duplicates()
+		channeldata.created_at=channeldata.created_at.apply(pandas.to_datetime)
+		channeldata.pm10=channeldata.pm10.apply(pandas.to_numeric)
+		channeldata.pm25=channeldata.pm25.apply(pandas.to_numeric)
+		channeldata.pm1=channeldata.pm1.apply(pandas.to_numeric)
+		channeldata.temp=channeldata.temp.apply(pandas.to_numeric)
+		channeldata.aqi=channeldata.aqi.apply(pandas.to_numeric)
+		channeldata=self.add_airbender_aqi_column(channeldata)
+		return channeldata
 	
-	
-	def thingspeak_update(self):
-		downloadedfiles={}
-		for index,row in self.tsdf.iterrows():
-			downloadedfile=self.thingspeak_update_device(row)
-			downloadedfiles[row['devname']]=downloadedfile
-		return downloadedfiles
-		
 	def translatethingspeakdata(self,channelfile):
 		with open(channelfile,"r") as f:
 			channeljson=json.loads(f.read())
@@ -192,29 +217,22 @@ class AirBender(DataBender):
 		channeldata.pm1=channeldata.pm1.apply(pandas.to_numeric)
 		channeldata.temp=channeldata.temp.apply(pandas.to_numeric)
 		channeldata.aqi=channeldata.aqi.apply(pandas.to_numeric)
+		channeldata=self.add_airbender_aqi_column(channeldata)
 		return channeldata
 	
-	def translateairvedadata(self,channelfile):
-		try:
-			channelfiledata=pandas.read_csv(channelfile,parse_dates=True)
-		except:
-			print "Could not read file " + channelfile
-			return None
-		cfdata=pandas.DataFrame(columns=["created_at","pm25","pm10","aqi","co2"])
-		if len(cfdata.columns)!=len(channelfiledata.columns):
-			print "Column mismatch in file " + channelfile
-			return None
-		channelfiledata.columns=cfdata.columns
-		channeldata=pandas.DataFrame(columns=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt'])
-		channeldata=channeldata.append(channelfiledata).drop_duplicates()
-		channeldata.created_at=channeldata.created_at.apply(pandas.to_datetime)
-		channeldata.pm10=channeldata.pm10.apply(pandas.to_numeric)
-		channeldata.pm25=channeldata.pm25.apply(pandas.to_numeric)
-		channeldata.pm1=channeldata.pm1.apply(pandas.to_numeric)
-		channeldata.temp=channeldata.temp.apply(pandas.to_numeric)
-		channeldata.aqi=channeldata.aqi.apply(pandas.to_numeric)
-		
-		return channeldata
+	def airveda_update(self):
+		downloadedfiles={}
+		for row in self.avdf.itertuples():
+			downloadedfile=self.airveda_update_device(row)
+			downloadedfiles[row.devname]=downloadedfile
+		return downloadedfiles
+	
+	def thingspeak_update(self):
+		downloadedfiles={}
+		for row in self.tsdf.itertuples():
+			downloadedfile=self.thingspeak_update_device(row)
+			downloadedfiles[row.devname]=downloadedfile
+		return downloadedfiles
 	
 	def getsipm25(self,pm25):
 		#print "PM25: "+str(pm25)
@@ -254,7 +272,7 @@ class AirBender(DataBender):
 
 		elif pm10>430:
 			return 400+(pm10-430)*(100/80)
-
+			
 	def calculate_aqi(self,row):
 		sipm10=self.getsipm10(float(row['pm10']))
 		sipm25=self.getsipm25(float(row['pm25']))
@@ -263,6 +281,7 @@ class AirBender(DataBender):
 		else:
 			aqi=sipm25
 		return aqi	
+	
 	def add_airbender_aqi_column(self,cdata):
 		cdata['airbenderaqi']=cdata.apply(lambda row: self.calculate_aqi(row),axis=1)
 		cdata.airbenderaqi=cdata.airbenderaqi.apply(pandas.to_numeric)
