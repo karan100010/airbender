@@ -100,7 +100,7 @@ class AirBender(DataBender):
 		downloadedfile=None
 		row=avdfrow
 		print row.devname
-		ds=DataStream("/home/arjun/ids/airbender/data/"+str(row.devname),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
+		ds=DataStream(os.path.join(self.datastreampath,str(row.devname)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 		ds.save_stream()
 		tsval=datetime.now()
 		remark="Trying update at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
