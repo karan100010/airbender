@@ -43,6 +43,42 @@ class AirBender(DataBender):
 			ds=DataStream(os.path.join(self.datastreampath,str(dev)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 			ds.save_stream()
 	
+	def reload_dfs(self):
+		try:
+			self.tsdf=self.thingspeakdevsheet.worksheet_by_title("Sheet1").get_as_df()
+			self.tsdf.devname=self.tsdf.devname.apply(str)
+			self.tsdf.lastupdate=self.tsdf.lastupdate.apply(str)
+		except Exception as exception:
+			print "Could not reload TSDF " + exception
+		try:
+			self.avdf=self.airvedadevsheet.worksheet_by_title("Sheet1").get_as_df()
+			self.avdf.devname=self.avdf.devname.apply(str)
+			self.avdf.lastupdate=self.avdf.lastupdate.apply(str)
+		except Exception as exception:
+			print "Could not reload AVDF " + exception
+			
+	def save_dfs(self):
+		try:
+			self.thingspeakdevsheet.worksheet_by_title("Sheet1").set_dataframe(self.tsdf,(1,1))
+		except Exception as exception:
+			print "Could not save TSDF " + exception
+		try:
+			self.airvedadevsheet.worksheet_by_title("Sheet1").set_dataframe(self.avdf,(1,1))
+		except Exception as exception:
+			print "Could not save AVDF " + exception
+	
+	def update_df(self,devname,field,value):
+		dev=self.lookup_device(devname)
+		if dev==None:
+			print "Device not found"
+			return False
+		if dev['type']=="airveda":
+			self.avdf.at[dev['data'].name,field]=value
+		if dev['type']=="thingspeak":
+			self.tsdf.at[dev['data'].name,field]=value
+		return True
+	
+		
 	def lookup_device(self,devname):
 		device={}
 		try:
