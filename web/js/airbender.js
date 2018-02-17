@@ -8,95 +8,30 @@ function setupAirbenderMap(lmap,url,urltype="google"){
 	
 }
 
-
-function addAirVedaLayer(map,defaultmarker,data,tabletop){
-		devices=getPointsAsGeoJson(data)
-		markerlayer=L.geoJson(devices, {
-			onEachFeature : function(device,layer){
-								airvedasheeturl=device['properties']['url']
-								devicon=L.divIcon({
-												className : "icon-div",
-												html: '<img src="'+defaultmarker+'" style="height: 30;width: 30;"/>'
-												})
-								layer.setIcon(devicon)
-								console.log(airvedasheeturl)
-								if (airvedasheeturl!=""){
-									var channeldata
-									console.log(airvedasheeturl)
-										
-									Tabletop.init( { key: airvedasheeturl,
-										callback: function(data,tabletop){
-												
-												if (data.hasOwnProperty(device['properties']['devname'])){
-													channeldata=data[device['properties']['devname']].elements
-													channeldata=channeldata.slice(-100)
-													
-													latestavgs=getLatestAvgs(device['properties']['devname'],channeldata)
-													//console.log(channeldata)
-													icon=getDevIcon(latestavgs['avgaqi'])
-													//console.log(icon)
-													layer.setIcon(icon)
-													layer.bindPopup("Loading...",{maxWidth: 800})
-													//console.log("CHanneldata, Airveda")
-													
-												}
-											},
-										simpleSheet: false } )
-									}
-									layer.on('click', function(e){
-															console.log(e)
-															Tabletop.init( { key: airvedasheeturl,
-																callback: function(data,tabletop){
-												
-																		if (data.hasOwnProperty(device['properties']['devname'])){
-																			channeldata=data[device['properties']['devname']].elements
-																			channeldata=channeldata.slice(-100)
-																			addAirbenderPopup(e,channeldata,device)
-																			
-																		}
-																}
-															})
-														})
-							}
-	}).addTo(map);
-}
-
-function addThingspeakLayer(map,defaultmarker,data,tabletop){
-			featureCollection=getPointsAsGeoJson(data)
-			devices=getPointsAsGeoJson(data)
-			markerlayer=L.geoJson(devices, {
-				onEachFeature : function(device,layer){
-					jsonurl=device['properties']['url']+"/feed.json"
-					var channeljson
-					var channeldata
-					$.getJSON(jsonurl,function(data){
-						channeljson=data
-						channeldata=getChannelData(channeljson)
-						latestavgs=getLatestAvgs(device['properties']['id'],channeldata)
-						//console.log(channeldata)
-						icon=getDevIcon(latestavgs['avgaqi'])
-						//console.log(icon)
-						layer.setIcon(icon)
-						layer.bindPopup("Loading...",{maxWidth: 800})
-						//console.log("Channeldata, Thingspeak")
-						//channeldata=getChannelData(channeljson)
-						layer.on('click', function(e){
-								channeldata=getChannelData(channeljson)
-								addAirbenderPopup(e,channeldata,device)
-							});
+function addAirbenderDevLayer(map,defaultmarker,data,tabletop){
+	console.log(data)
+	devices=getPointsAsGeoJson(data)
+	markerlayer=L.geoJson(devices, {
+		onEachFeature : function(device,layer){
+			jsonurl=device['properties']['feedurl']
+			icon=getDevIcon(device['properties']['aqi'])
+			layer.setIcon(icon)
+			layer.bindPopup("Loading...",{maxWidth: 800})
+				
+			$.getJSON(jsonurl,function(data){
+				channeldata=getDataAsArray(data)
+				console.log(channeldata)
+				layer.on('click', function(e){
+						addAirbenderPopup(e,channeldata,device)
 					});
-				}
-			}).addTo(map);
-		 
-	
+			});
+		}
+	}).addTo(map);	
 }
-
-
 
 function addAirbenderPopup(e,channeldata,device){
-	//console.log(channeldata)
 	var popup = e.target.getPopup();
-	channeldata2=channeldata.slice(-20)
+	channeldata2=channeldata
 	latestavgs=getLatestAvgs(device['properties']['devname'],channeldata2)
 	var div = $('<div id="'+device['properties']['devname']+'" class="popupGraph" style="width: 600px; height:250px;">\
 					<b>'+device['properties']['devname']+'</b>\
@@ -122,47 +57,7 @@ function addAirbenderPopup(e,channeldata,device){
 	popup.update();
 }
 
-function getChannelData(channeljson){
-	if (channeljson instanceof Array)
-	{
-		return channeljson
-	}
-	channeldata=[]
-	channeldef=channeljson['channel']
-	for (def in channeldef){
-		if (channeldef[def]=='Dust_PM25' ||  channeldef[def]=='PM2.5' || channeldef[def]=='PM 2.5' ){
-			channeldef[def]='pm25'
-		}
-		if (channeldef[def]=='Dust_PM10' || channeldef[def]=='PM 10'){
-			channeldef[def]='pm10'
-		}
-		if (channeldef[def]=='Dust_PM01' || channeldef[def]=='PM 1'){
-			channeldef[def]='pm1'
-		}
-		if (channeldef[def]=='TEMPERATURE' || channeldef[def]=='Temp C'){
-			channeldef[def]='temp'
-		}
-		if (channeldef[def]=='HUMIDITY' || channeldef[def]=='Humidity'){
-			channeldef[def]='humid'
-		}
-		if (channeldef[def]=='BATTERY' || channeldef[def]=='BattVolt'  || channeldef[def]=='BATTERY'){
-			channeldef[def]='batt'
-		}
-	}		
-	feeds=channeljson['feeds']
-	$(feeds).each(function(){
-		row={}
-		row['created_at']=this['created_at']
-		row['entry_id']=this['entry_id']
-		for (var key in this){
-			if (key.startsWith("field")){
-				row[channeldef[key]]=this[key]
-			}
-		}
-		channeldata.push(row)
-	});
-	return channeldata
-}
+
 function getDevIcon(aqi){
 	//console.log("AQI reported for icon selection="+aqi)
 	chosen_icon="icons/aqibase.png"
@@ -197,7 +92,19 @@ function getDevIcon(aqi){
 }	
 	
 		
-	
+
+
+function getDataAsArray(channeldata){
+	cdataarray=[]
+	for (var key in channeldata){
+		if (channeldata.hasOwnProperty(key)){
+			console.log(key+"->"+channeldata[key])
+			cdataarray.push(channeldata[key])
+		}
+	}
+	return cdataarray
+}
+
 // load device list in GeoJSON from a Google spreadsheet
 
 function getDevList(entry){
@@ -276,7 +183,7 @@ function getSiPm10(pm10){
 		
 		
 function getLatestAvgs(id,channeldata){
-		channeldata=channeldata.slice(-10)
+		//channeldata=channeldata.slice(-10)
 		sumsipm25=0.0
 		sumsipm10=0.0
 		sumaqi=0.0
@@ -323,7 +230,9 @@ function getLatestAvgs(id,channeldata){
 		response['avgsipm10']=Math.round(avgsipm10)
 		response['avgpm10']=Math.round(avgpm10)
 		response['avgpm25']=Math.round(avgpm25)
-	
+		console.log(ts)
+		ts=new Date(ts*1000)
+		
 		if (isDate(ts)){
 			response['ts']={"date":ts.getDate(),"time":ts.getTime()}
 		}
@@ -342,8 +251,9 @@ function getLatestAvgs(id,channeldata){
 }
 
 function isDate (value) {
-return value instanceof Date;
+	return value instanceof Date;
 };
+
 function displayGraph(div,data=null){
 	//console.log(div)
 	//console.log(data)

@@ -34,6 +34,14 @@ class AirBender(DataBender):
 			self.tsdf.lastupdate=self.tsdf.lastupdate.apply(str)
 		except:
 			print "Could not get thingspeaksheet " + self.thingspeakdevicelist
+		
+		self.devlist=self.avdf.devname.append(self.tsdf.devname).reset_index(drop=True)
+		
+		for dev in self.devlist:
+			print dev
+			ds=DataStream(os.path.join(self.datastreampath,str(dev)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
+			ds.save_stream()
+		'''
 		for dev in self.tsdf.devname:
 			print dev
 			ds=DataStream(os.path.join(self.datastreampath,str(dev)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
@@ -42,7 +50,7 @@ class AirBender(DataBender):
 			print dev
 			ds=DataStream(os.path.join(self.datastreampath,str(dev)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 			ds.save_stream()
-	
+		'''
 	def reload_dfs(self):
 		try:
 			self.tsdf=self.thingspeakdevsheet.worksheet_by_title("Sheet1").get_as_df()
@@ -56,6 +64,7 @@ class AirBender(DataBender):
 			self.avdf.lastupdate=self.avdf.lastupdate.apply(str)
 		except Exception as exception:
 			print "Could not reload AVDF " + exception
+		self.devlist=self.avdf.devname.append(self.tsdf.devname).reset_index(drop=True)
 			
 	def save_dfs(self):
 		try:
@@ -134,6 +143,55 @@ class AirBender(DataBender):
 		print filepath
 		return filepath
 			
+	
+	def update_device(self,devname):
+		downloadedfile=None
+		dev=self.lookup_device(devname)
+		if dev==None:
+			print "No such device"
+			return None
+		else:
+			print dev['type']
+			row=dev['data']
+		print row.devname
+		ds=DataStream(os.path.join(self.datastreampath,str(row.devname)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
+		ds.save_stream()
+		tsval=datetime.now()
+		remark="Trying update at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
+		self.update_df(row.devname,"remarks",remark)
+		try:
+			if dev['type']=="airveda":
+				devfile = self.airveda_get_dev_data(row)
+			if dev['type']=="thingspeak":
+				devfile=self.thingspeak_get_dev_data(row)
+			downloadedfile=devfile
+			print devfile
+			tsval=datetime.now()
+			remark="Successful download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
+			self.update_df(row.devname,"remarks",remark)
+			self.update_df(row.devname,"localfile",devfile)
+			if dev['type']=="airveda":
+				cdata=self.translateairvedadata(devfile)
+			if dev['type']=="thingspeak":
+				cdata=self.translatethingspeakdata(devfile)
+			cdata=self.add_airbender_aqi_column(cdata)
+			lastupdate=cdata.at[len(cdata)-1,"created_at"].strftime("%Y-%m-%d %H:%M:%S")
+			airbenderaqi=cdata.at[len(cdata)-1,"airbenderaqi"]
+			print "Last update at", lastupdate
+			self.update_df(row.devname,"lastupdate",lastupdate)
+			self.update_df(row.devname,"aqi",airbenderaqi)
+			ds.append_data(cdata)
+			ds.save_stream()
+		except Exception as exception:
+			print exception
+			tsval=datetime.now()
+			remark="Failed download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
+			self.update_df(row.devname,"remarks",remark)
+		self.save_dfs()
+		return downloadedfile
+	
+	
+	'''
 	def airveda_update_device(self,avdfrow):
 		downloadedfile=None
 		row=avdfrow
@@ -142,68 +200,61 @@ class AirBender(DataBender):
 		ds.save_stream()
 		tsval=datetime.now()
 		remark="Trying update at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-		self.avdf.at[row.name,"remarks"]=remark
+		self.update_df(row.devname,"remarks",remark)
 		try:
 			devfile = self.airveda_get_dev_data(row)
 			downloadedfile=devfile
 			print devfile
 			tsval=datetime.now()
 			remark="Successful download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.avdf.at[row.name,"remarks"]=remark
-			self.avdf.at[row.name,"localfile"]=devfile
+			self.update_df(row.devname,"remarks",remark)
+			self.update_df(row.devname,"localfile",devfile)
 			cdata=self.translateairvedadata(devfile)
 			cdata=self.add_airbender_aqi_column(cdata)
 			lastupdate=cdata.at[len(cdata)-1,"created_at"].strftime("%Y-%m-%d %H:%M:%S")
 			print "Last update at", lastupdate
-			
-			self.avdf.at[row.name,"lastupdate"]=lastupdate
+			self.update_df(row.devname,"lastupdate",lastupdate)
 			ds.append_data(cdata)
 			ds.save_stream()
 		except Exception as exception:
 			print exception
 			tsval=datetime.now()
 			remark="Failed download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.avdf.at[row.name,"remarks"]=remark
-			
-		self.airvedadevsheet.worksheet_by_title("Sheet1").set_dataframe(self.avdf,(1,1))
+			self.update_df(row.devname,"remarks",remark)
+		self.save_dfs()
 		return downloadedfile
 	
 	def thingspeak_update_device(self,tsdfrow):
 		downloadedfile=None
 		row=tsdfrow
-		
-		
 		print row.devname
 		ds=DataStream(os.path.join(self.datastreampath,str(row.devname)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 		ds.save_stream()
-		
 		tsval=datetime.now()
 		remark="Trying update at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-		self.tsdf.at[row.name,"remarks"]=remark
-		
+		self.update_df(row.devname,"remarks",remark)
 		try:
-			filepath=self.thingspeak_get_dev_data(row)
+			devfile=self.thingspeak_get_dev_data(row)
 			downloadedfile=filepath
 			tsval=datetime.now()
 			remark="Successful download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.tsdf.at[row.name,"remarks"]=remark
-			self.tsdf.at[row.name,"localfile"]=filepath
+			self.update_df(row.devname,"remarks",remark)
+			self.update_df(row.devname,"localfile",filepath)
 			cdata=self.translatethingspeakdata(filepath)
 			cdata=self.add_airbender_aqi_column(cdata)
 			lastupdate=cdata.at[len(cdata)-1,"created_at"].strftime("%Y-%m-%d %H:%M:%S")
 			print "Last update at", lastupdate
-			
-			self.tsdf.at[row.name,"lastupdate"]=lastupdate
+			self.update_df(row.devname,"lastupdate",lastupdate)
 			ds.append_data(cdata)
 			ds.save_stream()
 		except Exception as exception:
 			print exception
 			tsval=datetime.now()
 			remark="Failed download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.tsdf.at[row.name,"remarks"]=remark	
-		self.thingspeakdevsheet.worksheet_by_title("Sheet1").set_dataframe(self.tsdf,(1,1))
+			self.update_df(row.devname,"remarks",remark)
+		self.save_dfs()
 		return downloadedfile
-	
+	'''
 	def translateairvedadata(self,channelfile):
 		try:
 			channelfiledata=pandas.read_csv(channelfile,parse_dates=True)
