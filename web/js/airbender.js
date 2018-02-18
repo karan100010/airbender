@@ -2,10 +2,6 @@
 function setupAirbenderMap(lmap,url,urltype="google"){
 	setupMojoMap(lmap,url,urltype="google");
 	var url="https://spreadsheets.google.com/feeds/list/1mBWTyAp3tCnuunrK1Rbptb4rGDwByqX4NyUe8kxmR5Q/od6/public/basic?alt=json"
-	//addThingspeakLayers(lmap,url)
-	//addAirbenderPopups(lmap);
-	//lmap.eachLayer(function(layer){console.log("Hello");layer.bindPopup('Hello')});
-	
 }
 
 function addAirbenderDevLayer(map,defaultmarker,data,tabletop){
@@ -17,14 +13,16 @@ function addAirbenderDevLayer(map,defaultmarker,data,tabletop){
 			icon=getDevIcon(device['properties']['aqi'])
 			layer.setIcon(icon)
 			layer.bindPopup("Loading...",{maxWidth: 800})
-				
-			$.getJSON(jsonurl,function(data){
-				channeldata=getDataAsArray(data)
-				console.log(channeldata)
-				layer.on('click', function(e){
-						addAirbenderPopup(e,channeldata,device)
-					});
+			layer.on('click', function(e){
+				jsonurl=device['properties']['feedurl']
+				console.log(jsonurl)
+				$.getJSON(jsonurl,function(data){
+					channeldata=getDataAsArray(data)
+					console.log(channeldata)
+					addAirbenderPopup(e,channeldata,device)
+				});	
 			});
+			
 		}
 	}).addTo(map);	
 }
@@ -36,8 +34,7 @@ function addAirbenderPopup(e,channeldata,device){
 	var div = $('<div id="'+device['properties']['devname']+'" class="popupGraph" style="width: 600px; height:250px;">\
 					<b>'+device['properties']['devname']+'</b>\
 					<br>Readings averaged over last 10 mins\
-					<br><b>Date: </b>'+latestavgs['ts']['date']+'\
-					<br><b>Time: </b>'+latestavgs['ts']['time']+'\
+					<br><b>Updated: </b>'+Date(latestavgs['ts']['date']*1000)+'\
 					<br><a href="'+device['properties']['url']+'" target="_blank">Datafeed</a>\
 					<table width=100%><tbody>\
 					<tr><td><td><b>Avg PM10: </b></td><td style="text-align: left"	>'+latestavgs['avgpm10']+'</td></td><td><td><b> Avg PM25: </b></td><td style="text-align: left">'+latestavgs['avgpm25']+'</td></td><td><td><b>Avg AQI: </b></td><td style="text-align: left">'+latestavgs['avgaqi']+'</td></td></tr>\
@@ -98,7 +95,6 @@ function getDataAsArray(channeldata){
 	cdataarray=[]
 	for (var key in channeldata){
 		if (channeldata.hasOwnProperty(key)){
-			console.log(key+"->"+channeldata[key])
 			cdataarray.push(channeldata[key])
 		}
 	}
@@ -183,7 +179,7 @@ function getSiPm10(pm10){
 		
 		
 function getLatestAvgs(id,channeldata){
-		//channeldata=channeldata.slice(-10)
+		console.log(channeldata.length)
 		sumsipm25=0.0
 		sumsipm10=0.0
 		sumaqi=0.0
@@ -192,10 +188,6 @@ function getLatestAvgs(id,channeldata){
 		for (row in channeldata){
 			
 			pm25=parseFloat(channeldata[row].pm25)
-			//if (pm25==NaN){
-			//	console.log(channeldata)
-			//}
-			
 			pm10=parseFloat(channeldata[row].pm10)
 			sumpm10=sumpm10+pm10
 			sumpm25=sumpm25+pm25
@@ -212,18 +204,14 @@ function getLatestAvgs(id,channeldata){
 			else{
 				aqi=sipm25;
 			}
-			//console.log("PM10:"+pm10+" SIPM10:"+sipm10+" PM25: "+pm25+" SIPM25:"+sipm25+" AQI: "+aqi)
 			sumaqi=sumaqi+aqi
 			ts=channeldata[row].created_at
 		}
-		//console.log(row)
-		//ts=channeldata[row].created_at
-		//console.log(ts)
-		avgsipm25=sumsipm25/10
-		avgsipm10=sumsipm10/10
-		avgaqi=sumaqi/10
-		avgpm10=sumpm10/10
-		avgpm25=sumpm25/10
+		avgsipm25=sumsipm25/channeldata.length
+		avgsipm10=sumsipm10/channeldata.length
+		avgaqi=sumaqi/channeldata.length
+		avgpm10=sumpm10/channeldata.length
+		avgpm25=sumpm25/channeldata.length
 		response={}
 		response['avgaqi']=Math.round(avgaqi)
 		response['avgsipm25']=Math.round(avgsipm25)
@@ -245,7 +233,7 @@ function getLatestAvgs(id,channeldata){
 		else{
 			response['ts']={"date":ts.split(' ')[0],"time":ts.split(' ')[1]}
 		}
-		console.log(response)
+		//console.log(response)
 		return response
 		
 }
@@ -255,20 +243,8 @@ function isDate (value) {
 };
 
 function displayGraph(div,data=null){
-	//console.log(div)
-	//console.log(data)
-	if (data[0]['created_at'].indexOf("T")!=-1){
-		parseTime=d3.timeParse("%Y-%m-%dT%H:%M:%SZ")
-	}
-	else{
-		parseTime=d3.timeParse("%Y-%m-%d %H:%M:%S")
-	}
-	//console.log(parseTime(data[0]['created_at']))
-	//console.log(data[0]['created_at'])
+	parseTime=d3.timeParse("%s")
 	gheight=130
-	//pm10={height: $("#pm10").height(), width:$("#pm10").width()}
-	//aqi={height: $("#aqi").height(), width:$("#aqi").width()}
-	//pm25={height: $("#pm25").height(), width:$("#pm25").width()}
 	pm10={height: gheight, width:$("#pm10").width()}
 	aqi={height: gheight, width:$("#aqi").width()}
 	pm25={height: gheight, width:$("#pm25").width()}
@@ -288,12 +264,8 @@ function displayGraph(div,data=null){
 								.attr("height",aqi.height)
 								.attr("id", "svgaqi")
 		
-	//console.log(d3.time.hour.floor(new Date()))
-	//console.log(d3.time.hour.ceil(new Date()))
-		
 	var x = d3.scaleTime().range([0, pm10.width-40]);  
 	var y = d3.scaleLinear().range([gheight-25, 0]);
-
 
 	height=gheight-25
 	
@@ -312,10 +284,8 @@ function displayGraph(div,data=null){
 		d.aqi = +d.aqi;
 		
     });
-    //console.log(data)
     x.domain(d3.extent(data, function(d) { return d.created_at; }));
     y.domain([0, d3.max(data, function(d) { return d.aqi; })]);
-	// Define the line
 	
 	svgpm10=d3.select(div).select("#svgpm10").append("g")
 	

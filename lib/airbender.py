@@ -15,7 +15,20 @@ class AirBender(DataBender):
 		self.airvedaurl = self.config.get("Airveda","airvedaurl")
 		self.thingspeakdevicelist = self.config.get("Thingspeak","devicelist")				
 		self.datastreampath=self.config.get("System","datastreampath")
+		self.devicelist = self.config.get("Devices","devicelist")				
+		
 		counter=0
+		
+		try:
+			self.logger.info("Trying to get devsheet")
+			self.devsheet=self.gc.open_by_key(self.devicelist)
+			self.devdf=self.devsheet.worksheet_by_title("Sheet1").get_as_df()
+			self.devdf.devname=self.devdf.devname.apply(str)
+			self.devdf.lastupdate=self.devdf.lastupdate.apply(str)
+			
+		except Exception as e:
+			self.logger.error( "Could not get Devsheet " + self.devicelist + " because " + repr(e))
+		
 		try:
 			print "Trying to get airvedadevsheet"
 			self.airvedadevsheet=self.gc.open_by_key(self.airvedadevicelist)
@@ -35,9 +48,8 @@ class AirBender(DataBender):
 		except:
 			print "Could not get thingspeaksheet " + self.thingspeakdevicelist
 		
-		self.devlist=self.avdf.devname.append(self.tsdf.devname).reset_index(drop=True)
 		
-		for dev in self.devlist:
+		for dev in self.devdf.devname:
 			print dev
 			ds=DataStream(os.path.join(self.datastreampath,str(dev)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 			ds.save_stream()
@@ -51,7 +63,15 @@ class AirBender(DataBender):
 			ds=DataStream(os.path.join(self.datastreampath,str(dev)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 			ds.save_stream()
 		'''
-	def reload_dfs(self):
+	def reload_devdf(self):
+		try:
+			self.devdf=self.devsheet.worksheet_by_title("Sheet1").get_as_df()
+			self.devdf.devname=self.devdf.devname.apply(str)
+			self.devdf.lastupdate=self.devdf.lastupdate.apply(str)
+		except Exception as exception:
+			self.logger.error("Could not reload Dev DF " + repr(exception))
+			
+			
 		try:
 			self.tsdf=self.thingspeakdevsheet.worksheet_by_title("Sheet1").get_as_df()
 			self.tsdf.devname=self.tsdf.devname.apply(str)
@@ -64,9 +84,14 @@ class AirBender(DataBender):
 			self.avdf.lastupdate=self.avdf.lastupdate.apply(str)
 		except Exception as exception:
 			print "Could not reload AVDF " + exception
-		self.devlist=self.avdf.devname.append(self.tsdf.devname).reset_index(drop=True)
+		#self.devlist=self.avdf.devname.append(self.tsdf.devname).reset_index(drop=True)
 			
-	def save_dfs(self):
+	def save_devdf(self):
+		try:
+			self.devsheet.worksheet_by_title("Sheet1").set_dataframe(self.devdf,(1,1))
+		except Exception as exception:
+			self.logger.error("Could not save Dev DF " + repr(exception))
+		
 		try:
 			self.thingspeakdevsheet.worksheet_by_title("Sheet1").set_dataframe(self.tsdf,(1,1))
 		except Exception as exception:
@@ -76,11 +101,10 @@ class AirBender(DataBender):
 		except Exception as exception:
 			print "Could not save AVDF " + exception
 	
-	def update_df(self,devname,field,value):
+	def update_devdf(self,devname,field,value):
 		dev=self.lookup_device(devname)
-		if dev==None:
-			print "Device not found"
-			return False
+		self.devdf.at[dev.name,field]=value
+		return True
 		if dev['type']=="airveda":
 			self.avdf.at[dev['data'].name,field]=value
 		if dev['type']=="thingspeak":
@@ -90,6 +114,14 @@ class AirBender(DataBender):
 		
 	def lookup_device(self,devname):
 		device={}
+		try:
+			#device['data']=self.devdf.loc[self.devdf.devname==devname].iloc[0]
+			#device['type']=device['data'].devtype
+			device=self.devdf.loc[self.devdf.devname==devname].iloc[0]
+			return device
+		except IndexError as exception:
+			self.logger.error("Not in  Dev DF")
+			return None
 		try:
 			device['data']=self.tsdf.loc[self.tsdf.devname==devname].iloc[0]
 			device['type']="thingspeak"
@@ -147,47 +179,44 @@ class AirBender(DataBender):
 	def update_device(self,devname):
 		downloadedfile=None
 		dev=self.lookup_device(devname)
-		if dev==None:
-			print "No such device"
-			return None
-		else:
-			print dev['type']
-			row=dev['data']
+		print dev
+		print dev.devtype
+		row=dev
 		print row.devname
 		ds=DataStream(os.path.join(self.datastreampath,str(row.devname)),columnnames=['created_at','pm10','pm25','pm1','temp','humidity','entry_id','aqi','co2','batt','airbenderaqi'])
 		ds.save_stream()
 		tsval=datetime.now()
 		remark="Trying update at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-		self.update_df(row.devname,"remarks",remark)
+		self.update_devdf(row.devname,"remarks",remark)
 		try:
-			if dev['type']=="airveda":
+			if dev.devtype=="airveda":
 				devfile = self.airveda_get_dev_data(row)
-			if dev['type']=="thingspeak":
+			if dev.devtype=="thingspeak":
 				devfile=self.thingspeak_get_dev_data(row)
 			downloadedfile=devfile
 			print devfile
 			tsval=datetime.now()
 			remark="Successful download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.update_df(row.devname,"remarks",remark)
-			self.update_df(row.devname,"localfile",devfile)
-			if dev['type']=="airveda":
+			self.update_devdf(row.devname,"remarks",remark)
+			self.update_devdf(row.devname,"localfile",devfile)
+			if dev.devtype=="airveda":
 				cdata=self.translateairvedadata(devfile)
-			if dev['type']=="thingspeak":
+			if dev.devtype=="thingspeak":
 				cdata=self.translatethingspeakdata(devfile)
 			cdata=self.add_airbender_aqi_column(cdata)
 			lastupdate=cdata.at[len(cdata)-1,"created_at"].strftime("%Y-%m-%d %H:%M:%S")
 			airbenderaqi=cdata.at[len(cdata)-1,"airbenderaqi"]
 			print "Last update at", lastupdate
-			self.update_df(row.devname,"lastupdate",lastupdate)
-			self.update_df(row.devname,"aqi",airbenderaqi)
+			self.update_devdf(row.devname,"lastupdate",lastupdate)
+			self.update_devdf(row.devname,"aqi",airbenderaqi)
 			ds.append_data(cdata)
 			ds.save_stream()
 		except Exception as exception:
 			print exception
 			tsval=datetime.now()
 			remark="Failed download at " + tsval.strftime("%Y-%m-%d %H:%M:%S")
-			self.update_df(row.devname,"remarks",remark)
-		self.save_dfs()
+			self.update_devdf(row.devname,"remarks",remark)
+		self.save_devdf()
 		return downloadedfile
 	
 	
