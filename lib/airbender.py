@@ -140,9 +140,9 @@ class AirBender(DataBender):
 	def airveda_login(self):
 		self.goto_url(self.airvedaurl)
 		time.sleep(10)
-		self.driver.find_element_by_name("username").send_keys(self.airvedausername)
-		self.driver.find_element_by_name("password").send_keys(self.airvedapassword)
-		self.driver.find_element_by_name("username").send_keys(Keys.RETURN)
+		self.driver.find_element_by_id("txtEmailLogin").send_keys(self.airvedausername)
+		self.driver.find_element_by_id("txtPasswordLogin").send_keys(self.airvedapassword)
+		self.driver.find_element_by_id("txtPasswordLogin").send_keys(Keys.RETURN)
 	
 	def airveda_get_dev_data(self,row):
 		dev=row.devname

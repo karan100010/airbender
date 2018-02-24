@@ -22,7 +22,7 @@ def placeFiles(ftp, path,logger):
 
             logger.info("CWD " + name)
             ftp.cwd(name)
-            placeFiles(ftp, localpath)           
+            placeFiles(ftp, localpath,logger)           
             logger.info("CWD " + "..")
             ftp.cwd("..")
 
@@ -35,6 +35,9 @@ a.airveda_login()
 time.sleep(10)
 
 while True:
+	a.driver.close()
+	a.driver=a.get_driver()
+	a.airveda_login()
 	a.logger.info("Starting update....")
 	a.reload_devdf()
 	for dev in a.devdf.devname:
