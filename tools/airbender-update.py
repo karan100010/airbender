@@ -31,8 +31,8 @@ port=21
 
 
 a=AirBender(sys.argv[1])
-a.airveda_login()
-time.sleep(10)
+#a.airveda_login()
+#	time.sleep(10)
 
 while True:
 	a.driver.close()
