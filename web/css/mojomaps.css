@@ -1,6 +1,9 @@
 .popupGraph {
 			font: 11px arial, sans-serif;
 }	
+.logdiv {
+			font: 0px arial, sans-serif;
+}	
 table, th, td {
 				border: 0px solid black;
 				font: 11px arial, sans-serif;
