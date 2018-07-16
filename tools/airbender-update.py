@@ -3,6 +3,7 @@ sys.path.append("/opt/airbender/lib")
 from airbender import *
 from livdatdatastream import *
 from ftplib import FTP, error_perm
+
 def placeFiles(ftp, path,logger):
     for name in os.listdir(path):
         localpath = os.path.join(path, name)
@@ -30,11 +31,11 @@ host="103.21.58.231"
 port=21
 
 
-a=AirBender(sys.argv[1])
+#a=AirBender(sys.argv[1])
 #a.airveda_login()
 #	time.sleep(10)
 
-while True:
+'''while True:
 	a.driver.close()
 	a.driver=a.get_driver()
 	a.airveda_login()
@@ -52,3 +53,4 @@ while True:
 #airvedafiles=a.airveda_update()
 #thingspeakfiles=a.thingspeak_update()
 
+'''
