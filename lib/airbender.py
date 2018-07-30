@@ -3,7 +3,7 @@ sys.path.append("/opt/livingdata/lib")
 from livdatbender import *
 from livdatdatastream import *
 from bs4 import BeautifulSoup
-
+import configparser
 # Extend init with *args and **kwargs
 		
 class AirBender(DataBender):
@@ -14,7 +14,7 @@ class AirBender(DataBender):
 		self.airvedadevicelist = self.config.get("Airveda","devicelist")
 		self.airvedaurl = self.config.get("Airveda","airvedaurl")
 		self.thingspeakdevicelist = self.config.get("Thingspeak","devicelist")				
-		self.datastreampath=self.config.get("System","datastreampath")
+		# self.datastreampath=self.config.get("System","datastreampath")
 		self.devicelist = self.config.get("Devices","devicelist")				
 		
 		counter=0
@@ -148,7 +148,7 @@ class AirBender(DataBender):
 		dev=row.devname
 		if os.path.exists(os.path.join(self.sessiondownloaddir,str(dev)+".csv")):
 			os.rename(os.path.join(self.sessiondownloaddir,str(dev)+".csv"),os.path.join(self.sessiondownloaddir,str(dev)+"-prev.csv"))
-		self.goto_url(self.airvedaurl)
+		"""self.goto_url(self.airvedaurl)
 		time.sleep(10)
 		self.driver.find_element_by_id("checkbox2").click()
 		self.driver.find_element_by_id("checkbox3").click()
@@ -161,7 +161,7 @@ class AirBender(DataBender):
 		self.driver.find_element_by_class_name("select2-search__field").send_keys(Keys.RETURN)
 		time.sleep(3)
 		self.driver.find_element_by_id("download_button").click()
-		time.sleep(20)
+		time.sleep(20)"""
 		os.rename(os.path.join(self.sessiondownloaddir,"airveda_data.csv"),os.path.join(self.sessiondownloaddir,str(dev)+".csv"))
 		return os.path.join(self.sessiondownloaddir,str(dev)+".csv")
 	
@@ -174,7 +174,7 @@ class AirBender(DataBender):
 			f.write(json.dumps(latestjson))
 		print filepath
 		return filepath
-			
+	'''		
 	
 	def update_device(self,devname):
 		downloadedfile=None
@@ -218,6 +218,7 @@ class AirBender(DataBender):
 			self.update_devdf(row.devname,"remarks",remark)
 		self.save_devdf()
 		return downloadedfile
+    '''
 	
 	
 	'''

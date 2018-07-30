@@ -1,0 +1,41 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul 30 23:16:59 2018
+
+@author: lilhack110
+"""
+
+import pandas
+import pygsheets
+one=pygsheets.authorize("/home/lilhack110/authdir/sheets.googleapis.com-python.json")
+one.list_ssheets()
+two=one.open_by_key("1gf4c3_VfR-hUKfhZTOIwyn-uXpcrvbq6ZAV6k9umo_A")
+two.worksheet_by_title("Sheet1")
+three=two.worksheet_by_title("Sheet1")
+airv=three.get_as_df()
+only_dev=airv["devtype"]
+
+#dev_2=only_dev==True
+
+dev_2=only_dev=="airveda"
+dev_3=dev_2==True
+brodlist=airv[dev_3]
+#brodlist=airv[airv[dev_3]]
+#brodlist=airv[dev_2]
+#devlist=brodlist["devname"]
+
+x=pandas.read_csv("/home/lilhack110/airveda_data.csv",index_col=0)
+
+
+devicedatadf=pandas.DataFrame(index=x.index,columns=[])
+#devicedatadf['Created Date']=x['Created Date']
+for devicename in devlist:
+    devicedatadf=pandas.DataFrame(index=x.index,columns=[])
+
+    for col in x.columns:
+        if str(devicename) in col:
+            devicedatadf[col]=x[col]
+            print(x[col])
+            x[col].to_csv(str(col))
+                
