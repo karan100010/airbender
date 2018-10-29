@@ -9,14 +9,7 @@ import pandas as pd
 import os
 import pygsheets
 import shutil
- 
-def csv_to_json(filename):
-    a=pd.read_csv(filename,index_col=0)
-    path= os.path.splitext(filename)[0]
-    b=a.to_json(path+".json",orient='index')
-    return b
-
-
+#step1 go in the drive to download df
 sheet=pygsheets.authorize("/home/k/client_secret_232033399245-on3oigarcq5a884fkb7gqr9rv9ohef34.apps.googleusercontent.com.json")
 devsheet=sheet.open_by_key("1gf4c3_VfR-hUKfhZTOIwyn-uXpcrvbq6ZAV6k9umo_A")
 devsheetw1=devsheet.worksheet_by_title("Sheet1")
@@ -30,16 +23,14 @@ onlyairveda=devicesdf=="airveda"
 airv=devdf[onlyairveda==True]
 names=airv["devname"].tolist()
 names
-#renameing columns
+# step 2 renameing columns
 df=pd.read_csv("/home/k/to_host/all.csv",index_col=0)
 a=pd.read_csv("/home/k/dev/to_host/new_names1.csv")
 value=a["CreatedDate.1"].tolist()
 key=a["CreatedDate"].tolist()
 dictionary = dict(zip(key, value))
 df.rename(columns=dictionary,inplace=True)
-
-
-
+# step 3 get the csvs separated
 for device in names:
     cols = [col for col in df.columns if str(device) in col]
    # print(cols)
@@ -48,8 +39,22 @@ for device in names:
         df[cols].to_csv("/home/k/test"+str(device)+".csv")
     else:
         lis.append(device)
+#step 4 before converting csv _to_json use airbender 
+%run dev/airbender/lib/airbender.py   
+air=AirBender("airveda.conf")
+files=os.listdir("/home/k/all_data/")  
+for n in files:
+    air.translateairvedadata("/home/k/all_data/"+names)        
+#use the function below to convert all csvs to jsons
+def csv_to_json(filename):
+    a=pd.read_csv(filename,index_col=0)
+    path= os.path.splitext(filename)[0]
+    b=a.to_json(path+".json",orient='index')
+    return b
+
+#step 6 updating in the latest.json folder for each device
         
-# after spliting all.csv file into many csvs use airbender translate_airveda function
+
  
 jsons=os.listdir("/home/k/all_data/json/")
 folders=os.listdir("/home/k/data/")
