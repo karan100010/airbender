@@ -14,7 +14,7 @@ class AirBender(DataBender):
 		self.airvedadevicelist = self.config.get("Airveda","devicelist")
 		self.airvedaurl = self.config.get("Airveda","airvedaurl")
 		self.thingspeakdevicelist = self.config.get("Thingspeak","devicelist")				
-		# self.datastreampath=self.config.get("System","datastreampath")
+		self.datastreampath=self.config.get("System","datastreampath")
 		self.devicelist = self.config.get("Devices","devicelist")				
 		
 		counter=0
@@ -92,14 +92,14 @@ class AirBender(DataBender):
 		except Exception as exception:
 			self.logger.error("Could not save Dev DF " + repr(exception))
 		
-		try:
+	"""	try:
 			self.thingspeakdevsheet.worksheet_by_title("Sheet1").set_dataframe(self.tsdf,(1,1))
 		except Exception as exception:
-			print "Could not save TSDF " + exception
+			print "Could not save TSDF " + str(exception)
 		try:
 			self.airvedadevsheet.worksheet_by_title("Sheet1").set_dataframe(self.avdf,(1,1))
 		except Exception as exception:
-			print "Could not save AVDF " + exception
+			print "Could not save AVDF " + str(exception)"""
 	
 	def update_devdf(self,devname,field,value):
 		dev=self.lookup_device(devname)
