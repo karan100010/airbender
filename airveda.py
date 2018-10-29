@@ -52,7 +52,7 @@ def csv_to_json(filename):
     b=a.to_json(path+".json",orient='index')
     return b
 
-#step 6 updating in the latest.json folder for each device
+#step 6 updating in the latest.json file for for each device
         
 
  
