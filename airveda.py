@@ -5,6 +5,9 @@ Created on Tue Oct 16 22:43:31 2018
 @author: k
 """
 #two csvs required for this code are insid airbender reposiditory
+import sys
+sys.path.append("/opt/airveda/lib")
+from airbender import *
 import pandas as pd
 import os
 import pygsheets
@@ -40,17 +43,18 @@ for device in names:
     else:
         lis.append(device)
 #step 4 before converting csv _to_json use airbender 
-%run dev/airbender/lib/airbender.py   
+   
 air=AirBender("airveda.conf")
 files=os.listdir("/home/k/all_data/")  
 for n in files:
-    air.translateairvedadata("/home/k/all_data/"+names)        
+    a=air.translateairvedadata("/home/k/all_data/"+n)
+    a.to_json("/home/k/all_data/json/"+n+".json",orient="index")		        
 #use the function below to convert all csvs to jsons
-def csv_to_json(filename):
+'''def csv_to_json(filename):
     a=pd.read_csv(filename,index_col=0)
     path= os.path.splitext(filename)[0]
     b=a.to_json(path+".json",orient='index')
-    return b
+    return b'''
 
 #step 6 updating in the latest.json file for for each device
         
